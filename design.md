@@ -1,4 +1,4 @@
-# Gemini Text Game 2
+# Biomebound
 
 * Genre: Survival Strategy Colony-management Simulation.
 * Game loop uses 1-second ticks, and all simulations are based on their number of ticks.
