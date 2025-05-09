@@ -50,9 +50,9 @@ func PrintWorldMap(request *sis.Request) {
 		// Heading/Top border
 		if y == 0 && !noNumbers {
 			if showValues {
-				request.PlainText(divider + "     " + divider)
+				request.PlainText("%s", divider+"     "+divider)
 			} else {
-				request.PlainText(divider + "  " + divider)
+				request.PlainText("%s", divider+"  "+divider)
 			}
 			for x := range MapWidth {
 				if showValues {
@@ -66,7 +66,7 @@ func PrintWorldMap(request *sis.Request) {
 				request.PlainText("\n")
 			}
 		} else if y == 0 && noNumbers {
-			request.PlainText(strings.Repeat("-", MapWidth*3+2))
+			request.PlainText("%s", strings.Repeat("-", MapWidth*3+2))
 			request.PlainText("\n")
 		}
 
@@ -81,7 +81,7 @@ func PrintWorldMap(request *sis.Request) {
 		}
 		for x := range MapWidth {
 			if showValues {
-				request.PlainText(fmt.Sprintf("%+.2f"+divider, Map[y][x].altitude))
+				request.PlainText("%s", fmt.Sprintf("%+.2f"+divider, Map[y][x].altitude))
 			} else {
 				tile := &Map[y][x]
 				// Prefix
@@ -173,7 +173,7 @@ func PrintWorldMap(request *sis.Request) {
 						request.PlainText(" ") // Default plains
 					}
 				}
-				request.PlainText(divider)
+				request.PlainText("%s", divider)
 			}
 		}
 
@@ -188,7 +188,7 @@ func PrintWorldMap(request *sis.Request) {
 
 		// Bottom border
 		if noNumbers && y == MapWidth-1 {
-			request.PlainText(strings.Repeat("-", MapWidth*3+2))
+			request.PlainText("%s", strings.Repeat("-", MapWidth*3+2))
 			request.PlainText("\n")
 		}
 	}

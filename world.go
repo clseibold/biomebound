@@ -537,11 +537,25 @@ func generatePlateaus(seed int64) {
 					plateauHeight := plateauHeightBase + regionHeight*plateauHeightVariation
 
 					// Blend between original height and plateau height
-					blendStrength := (plateauValue - plateauThreshold) * 3.0
+					blendStrength := (plateauValue - plateauThreshold) * 3.0 // TODO: This blendStrength is causing problems (blending too much)
 					blendStrength = math.Min(blendStrength, plateauFlatness)
 
 					// Calculate the new height as a blend between original and plateau, capping at 0.9
-					newHeight := min(Map[y][x].altitude*(1-blendStrength)+plateauHeight*blendStrength, 0.9)
+					newHeight := Map[y][x].altitude*(1-blendStrength) + plateauHeight*blendStrength
+
+					// Ensure plateau is at least 0.2 higher than previous height
+					heightDifference := 0.2
+					if newHeight < Map[y][x].altitude+heightDifference {
+						newHeight = Map[y][x].altitude + heightDifference
+					}
+
+					// Ensure the plateau height is above the minimum threshold
+					minPlateauHeight := 0.5
+					if newHeight < minPlateauHeight {
+						newHeight = minPlateauHeight
+					}
+
+					newHeight = min(newHeight, 0.9)
 
 					// Apply the new height
 					Map[y][x].altitude = newHeight
@@ -550,52 +564,54 @@ func generatePlateaus(seed int64) {
 			}
 		}
 
-		// Smooth plateau edges (keeping the same code from before)
-		var tempMap [MapHeight][MapWidth]float64
-		for y := range MapHeight {
-			for x := range MapWidth {
-				tempMap[y][x] = Map[y][x].altitude
-			}
-		}
-
-		// Apply edge smoothing
-		for y := 1; y < MapHeight-1; y++ {
-			for x := 1; x < MapWidth-1; x++ {
-				plateauValue := plateauNoise.Noise2D(float64(x)/(MapWidth*0.2), float64(y)/(MapHeight*0.2))
-				if math.Abs(plateauValue-plateauThreshold) > 0.1 {
-					continue
+		/*
+			// Smooth plateau edges
+			var tempMap [MapHeight][MapWidth]float64
+			for y := range MapHeight {
+				for x := range MapWidth {
+					tempMap[y][x] = Map[y][x].altitude
 				}
+			}
 
-				// Calculate average height of neighbors
-				sum := 0.0
-				count := 0
+			// Apply edge smoothing
+			for y := 1; y < MapHeight-1; y++ {
+				for x := 1; x < MapWidth-1; x++ {
+					plateauValue := plateauNoise.Noise2D(float64(x)/(MapWidth*0.2), float64(y)/(MapHeight*0.2))
+					if math.Abs(plateauValue-plateauThreshold) > 0.1 {
+						continue
+					}
 
-				for dy := -1; dy <= 1; dy++ {
-					for dx := -1; dx <= 1; dx++ {
-						if dx == 0 && dy == 0 {
-							continue
-						}
+					// Calculate average height of neighbors
+					sum := 0.0
+					count := 0
 
-						nx, ny := x+dx, y+dy
-						if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
-							sum += tempMap[ny][nx]
-							count++
+					for dy := -1; dy <= 1; dy++ {
+						for dx := -1; dx <= 1; dx++ {
+							if dx == 0 && dy == 0 {
+								continue
+							}
+
+							nx, ny := x+dx, y+dy
+							if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
+								sum += tempMap[ny][nx]
+								count++
+							}
 						}
 					}
-				}
 
-				if count > 0 {
-					avgHeight := sum / float64(count)
+					if count > 0 {
+						avgHeight := sum / float64(count)
 
-					// Blend between current height and average height at plateau edges
-					edgeBlend := 1.0 - math.Abs(plateauValue-plateauThreshold)*10.0
-					edgeBlend = math.Max(0.0, math.Min(0.5, edgeBlend))
+						// Blend between current height and average height at plateau edges
+						edgeBlend := 1.0 - math.Abs(plateauValue-plateauThreshold)*10.0
+						edgeBlend = math.Max(0.0, math.Min(0.5, edgeBlend))
 
-					Map[y][x].altitude = tempMap[y][x]*(1-edgeBlend) + avgHeight*edgeBlend
-					Map[y][x].landType = LandType_Plateaus
+						Map[y][x].altitude = tempMap[y][x]*(1-edgeBlend) + avgHeight*edgeBlend
+						Map[y][x].landType = LandType_Plateaus
+					}
 				}
 			}
-		}
+		*/
 	}
 }
 
