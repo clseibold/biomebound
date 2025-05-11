@@ -2,10 +2,32 @@ package biomebound
 
 // These are the resources that are part of the land, excluding animals, and are usually
 // held within resource zones. They are harvested into regular resources.
-type LandResource uint8
+// type LandResource uint16
+
+type _landResource uint16
+
+func LandResource(Type LandResourceType) _landResource {
+	return _landResource(uint16(Type) | (uint16(TreeType_Unknown) << 8))
+}
+
+func LandResource_Woods(Tree TreeType) _landResource {
+	return _landResource(uint16(_landResource_Woods) | (uint16(Tree) << 8))
+}
+
+func (resource _landResource) Type() LandResourceType {
+	return LandResourceType(uint16(resource) & 255)
+}
+
+func (resource _landResource) Tree() TreeType {
+	return TreeType(uint16(resource) >> 8)
+}
+
+const LandResource_Max = _landResource((255 << 8) | 255)
+
+type LandResourceType uint8
 
 const (
-	LandResource_Unknown LandResource = iota
+	LandResource_Unknown LandResourceType = iota
 	LandResource_Dirt
 
 	// Water Types
@@ -14,7 +36,7 @@ const (
 	LandResource_Lake_Horizontal
 
 	// Tree Types
-	LandResource_Forest_Oak
+	_landResource_Woods
 
 	// Fuel Ore
 	LandResource_Coal
@@ -48,11 +70,11 @@ const (
 	LandResource_Mushrooms
 	LandResource_Strawberries
 
-	LandResource_Max
+	LandResourceType_Max
 )
 
-func (resource LandResource) PerDayProductionPerAgent() float64 {
-	switch resource {
+func (resource _landResource) PerDayProductionPerAgent() float64 {
+	switch resource.Type() {
 	case LandResource_Unknown:
 		return 0
 	case LandResource_Dirt:
@@ -63,7 +85,7 @@ func (resource LandResource) PerDayProductionPerAgent() float64 {
 		return 20 * 20 // Liters - usually 20 at a time, 20 trips per 24 hours
 	case LandResource_Lake_Horizontal:
 		return 20 * 20 // Liters - usually 20 at a time, 20 trips per 24 hours
-	case LandResource_Forest_Oak:
+	case _landResource_Woods:
 		return 100 // Trees - 100 trees cut per 24 hours, 10 to 50 trees sawmilled per day
 	case LandResource_Coal:
 		return 0
@@ -116,73 +138,73 @@ func (resource LandResource) PerDayProductionPerAgent() float64 {
 	}
 }
 
-func (resource LandResource) ToResource() Resource {
-	switch resource {
+func (resource _landResource) ToResource() _resource {
+	switch resource.Type() {
 	case LandResource_Unknown:
-		return Resource_Unknown
+		return Resource(Resource_Unknown)
 	case LandResource_Dirt:
-		return Resource_Unknown
+		return Resource(Resource_Unknown)
 	case LandResource_Pond:
-		return Resource_Water
+		return Resource(Resource_Water)
 	case LandResource_Lake_Vertical:
-		return Resource_Water
+		return Resource(Resource_Water)
 	case LandResource_Lake_Horizontal:
-		return Resource_Water
-	case LandResource_Forest_Oak:
-		return Resource_Oak_Logs
+		return Resource(Resource_Water)
+	case _landResource_Woods:
+		return Resource_Logs(resource.Tree())
 	case LandResource_Coal:
-		return Resource_Coal
+		return Resource(Resource_Coal)
 	case LandResource_Clay:
-		return Resource_Clay
+		return Resource(Resource_Clay)
 	case LandResource_Granite:
-		return Resource_Granite
+		return Resource(Resource_Granite)
 	case LandResource_Limestone:
-		return Resource_Limestone
+		return Resource(Resource_Limestone)
 	case LandResource_Sandstone:
-		return Resource_Sandstone
+		return Resource(Resource_Sandstone)
 	case LandResource_Marble:
-		return Resource_Marble
+		return Resource(Resource_Marble)
 	case LandResource_Slate:
-		return Resource_Slate
+		return Resource(Resource_Slate)
 	case LandResource_Iron:
-		return Resource_Iron
+		return Resource(Resource_Iron)
 	case LandResource_Aluminum:
-		return Resource_Aluminum
+		return Resource(Resource_Aluminum)
 	case LandResource_Zinc:
-		return Resource_Zinc
+		return Resource(Resource_Zinc)
 	case LandResource_Copper:
-		return Resource_Copper
+		return Resource(Resource_Copper)
 	case LandResource_Nickel:
-		return Resource_Nickel
+		return Resource(Resource_Nickel)
 	case LandResource_Tin:
-		return Resource_Tin
+		return Resource(Resource_Tin)
 	case LandResource_Silver:
-		return Resource_Silver
+		return Resource(Resource_Silver)
 	case LandResource_Gold:
-		return Resource_Gold
+		return Resource(Resource_Gold)
 	case LandResource_Haygrass:
-		return Resource_Hay
+		return Resource(Resource_Hay)
 	case LandResource_RawRice:
-		return Resource_RawRice
+		return Resource(Resource_RawRice)
 	case LandResource_Berries:
-		return Resource_Berries
+		return Resource(Resource_Berries)
 	case LandResource_Potatoes:
-		return Resource_Potatoes
+		return Resource(Resource_Potatoes)
 	case LandResource_Corn:
-		return Resource_Corn
+		return Resource(Resource_Corn)
 	case LandResource_Agave:
-		return Resource_Agave
+		return Resource(Resource_Agave)
 	case LandResource_Mushrooms:
-		return Resource_Mushrooms
+		return Resource(Resource_Mushrooms)
 	case LandResource_Strawberries:
-		return Resource_Strawberries
+		return Resource(Resource_Strawberries)
 	default:
-		return Resource_Unknown
+		return Resource(Resource_Unknown)
 	}
 }
 
-func (resource LandResource) ToString() string {
-	switch resource {
+func (resource _landResource) ToString() string {
+	switch resource.Type() {
 	case LandResource_Unknown:
 		return "Unknown"
 	case LandResource_Dirt:
@@ -193,8 +215,8 @@ func (resource LandResource) ToString() string {
 		return "Lake (Vertical)"
 	case LandResource_Lake_Horizontal:
 		return "Lake (Horizontal)"
-	case LandResource_Forest_Oak:
-		return "Oak Forest"
+	case _landResource_Woods:
+		return resource.Tree().ToString() + " Woods"
 	case LandResource_Coal:
 		return "Coal"
 	case LandResource_Clay:
@@ -247,16 +269,36 @@ func (resource LandResource) ToString() string {
 }
 
 // These are the resources that have been harvested or crafted.
-type Resource uint8 // uint8 max is 255, uint16 max is 65535
+type _resource uint16
+
+func Resource(Type ResourceType) _resource {
+	return _resource(uint16(Type) | (uint16(TreeType_Unknown) << 8))
+}
+
+func Resource_Logs(Tree TreeType) _resource {
+	return _resource(uint16(_landResource_Woods) | (uint16(Tree) << 8))
+}
+
+func (resource _resource) Type() ResourceType {
+	return ResourceType(uint16(resource) & 255)
+}
+
+func (resource _resource) Tree() TreeType {
+	return TreeType(uint16(resource) >> 8)
+}
+
+const Resource_Max = _resource((255 << 8) | 255)
+
+type ResourceType uint8 // uint8 max is 255, uint16 max is 65535
 
 const (
 	// Basics
-	Resource_Unknown Resource = iota
+	Resource_Unknown ResourceType = iota
 	Resource_Water
 	Resource_ResearchPoints
 
 	// Wood and Fuel
-	Resource_Oak_Logs
+	_resource_Logs
 	Resource_Coal
 
 	// Stone
@@ -312,19 +354,19 @@ const (
 	Resource_Steel  // Crafted from Iron and a small percentage of Carbon. Smelt pig iron combined with carbon (in the form of coke, a carbon derived fro coal) and other elements. Alloy with manganese, nickel, chromium, or vanadium, for different types of steel. Finally, refine and cast into various shapes (sheets, bars, and beams).
 	Resource_Bronze // Alloy of Copper and Tin
 
-	Resource_Max
+	ResourceType_Max
 )
 
-func (resource *Resource) ToString() string {
-	switch *resource {
+func (resource _resource) ToString() string {
+	switch resource.Type() {
 	case Resource_Unknown:
 		return "Unknown"
 	case Resource_Water:
 		return "Water"
 	case Resource_ResearchPoints:
 		return "Research Points"
-	case Resource_Oak_Logs:
-		return "Oak Logs"
+	case _resource_Logs:
+		return resource.Tree().ToString() + " Logs"
 	case Resource_Coal:
 		return "Coal"
 	case Resource_Clay:
@@ -395,83 +437,302 @@ func (resource *Resource) ToString() string {
 // There are 73 tree types.
 type TreeType uint8
 
-// White, Red, English, Cork Oak
-
 const (
-	TreeType_Acacia TreeType = iota
+	TreeType_Unknown TreeType = iota
+	TreeType_Mahogany
+	TreeType_Kapok_Tree
+	TreeType_Brazil_Nut_Tree
+	TreeType_Rubber_Tree
+	TreeType_Strangler_Fig
+	TreeType_Teak
+	TreeType_Sal_Tree
+	TreeType_Indian_Rosewood
+	TreeType_Flame_Tree
+	TreeType_Tamarind
+	TreeType_Podocarpus_Trees
 	TreeType_Alder
-	TreeType_Aleppo_Pine
+	TreeType_Tree_Ferns
+	TreeType_Magnolia
+	TreeType_Bamboo
+	TreeType_Ironwood
+	TreeType_Ebony
+	TreeType_Meranti
+	TreeType_Rosewood
+	TreeType_Nutmeg_Tree
+	TreeType_Mango_Tree
+	TreeType_Banyan_Tree
+	TreeType_Jackfruit_Tree
+	TreeType_Sandalwood
+	TreeType_Dipterocarp_Trees
+	TreeType_Acacia
 	TreeType_Baobab
-	TreeType_Bald_Cypress
+	TreeType_Marula_Tree
+	TreeType_Sausage_Tree
+	TreeType_Terminalia
+	TreeType_Mangrove_Palm
+	TreeType_Water_Tupelo
+	TreeType_Swamp_Mahogany
+	TreeType_Pond_Cypress
+	TreeType_Melaleuca
+	TreeType_Rattan_Palm
+	TreeType_Screw_Pine
+	TreeType_Water_Hickory
+	TreeType_Oil_Palm
+	TreeType_Red_Mangrove
+	TreeType_Black_Mangrove
+	TreeType_White_Mangrove
+	TreeType_Buttonwood
+	TreeType_Sea_Hibiscus
+	TreeType_Oak // incl. Swamp Chestnut Oak, Cork Oak, White&Red Oak
+	TreeType_Maple
 	TreeType_Beech
 	TreeType_Birch
-	TreeType_Black_Gum
-	TreeType_Black_Mangrove
-	TreeType_Black_Spruce
-	TreeType_Brazil_Nut_Tree
-	TreeType_Buttonwood
-	TreeType_Camel_Thorn_Tree
-	TreeType_Carob_Tree
-	TreeType_Cedar
-	TreeType_Cecropia
-	TreeType_Chestnut
-	TreeType_Cork_Oak // Red Oak, White Oak, Live Oak
-	TreeType_Cottonwood
-	TreeType_Cypress
-	TreeType_Date_Palm
-	TreeType_Dipterocarp_Trees
+	TreeType_Hickory
+	TreeType_Eastern_Hemlock
 	TreeType_Douglas_Fir
-	TreeType_Ebony
-	TreeType_Fir
-	TreeType_Ficus_Fig_Trees
-	TreeType_Hemlock
-	TreeType_Ironwood
-	TreeType_Juniper
-	TreeType_Kapok
-	TreeType_Karee_Tree
-	TreeType_Larch
-	TreeType_Mahogany
-	TreeType_Magnolia
-	TreeType_Mango_Tree
-	TreeType_Marula_Tree
-	TreeType_Mesquite
-	TreeType_Ogeechee_Lime
-	TreeType_Olive_Tree
-	TreeType_Palo_Verde
-	TreeType_Pinyon_Pine
-	TreeType_Podocarpus
-	TreeType_Pond_Apple
-	TreeType_Pond_Cypress
-	TreeType_Poplar
-	TreeType_Protea
-	TreeType_Red_Alder
-	TreeType_Red_Mangrove
-	TreeType_River_Birch
-	TreeType_Rosewood
-	TreeType_Rubber_Tree
-	TreeType_Sagebrush_Woody_Shrub // TODO
-	TreeType_Sal_Tree
-	TreeType_Sandalwood
-	TreeType_Screwbean_Mesquite
-	TreeType_Shepherds_Tree
-	TreeType_Silver_Tree
+	TreeType_Red_Maple
+	TreeType_White_Pine
+	TreeType_Chestnut
 	TreeType_Sitka_Spruce
-	TreeType_Smoke_Tree
-	TreeType_Spruce
-	TreeType_Stone_Pine
-	TreeType_Sycamore
-	TreeType_Tamarisk
-	TreeType_Tamarack_Larch
-	TreeType_Teak
-	TreeType_Tree_Ferns // TODO
-	TreeType_Walnut
-	TreeType_Water_Tupelo
-	TreeType_Western_Hemlock
-	TreeType_White_Cedar
-	TreeType_White_Mangrove
-	TreeType_Wild_Olive
+	TreeType_Western_Red_Cedar
+	TreeType_Bigleaf_Maple
+	TreeType_Coast_Redwood
+	TreeType_Yellow_Cedar
+	TreeType_Scots_Pine
+	TreeType_Norway_Spruce
+	TreeType_Lodgepole_Pine
+	TreeType_Bald_Cypress
+	TreeType_Black_Gum
+	TreeType_Sweetbay_Magnolia
 	TreeType_Willow
+	TreeType_Gumbo_Limbo
+	TreeType_Ombú_Tree
+	TreeType_Wild_Olive
+	TreeType_Cottonwood
+	TreeType_American_Elm
+	TreeType_Box_Elder
+	TreeType_Tamarack
+	TreeType_Black_Spruce
+	TreeType_Red_Cedar
+	TreeType_Krummholz_Pines
+	TreeType_Mountain_Hemlock
+	TreeType_Juniper
+	TreeType_Dwarf_Willow
+	TreeType_Bristlecone_Pine
+	TreeType_Dwarf_Birch
+	TreeType_Arctic_Willow
+	TreeType_Siberian_Elm
+	TreeType_Pinyon_Pine
+	TreeType_Olive_Trees
+	TreeType_Carob_Tree
+	TreeType_Aleppo_Pine
+	TreeType_Protea_Trees
+	TreeType_Silver_Tree
+	TreeType_Mesquite
+	TreeType_Palo_Verde
+	TreeType_Date_Palm
+	TreeType_Tamarisk
+	TreeType_Desert_Willow
+
+	TreeType_Max
 )
+
+func (treeType TreeType) ToString() string {
+	switch treeType {
+	case TreeType_Unknown:
+		return "Unknown"
+	case TreeType_Mahogany:
+		return "Mahogany"
+	case TreeType_Kapok_Tree:
+		return "Kapok Tree"
+	case TreeType_Brazil_Nut_Tree:
+		return "Brazil Nut Tree"
+	case TreeType_Rubber_Tree:
+		return "Rubber Tree"
+	case TreeType_Strangler_Fig:
+		return "Strangler Fig"
+	case TreeType_Teak:
+		return "Teak"
+	case TreeType_Sal_Tree:
+		return "Sal Tree"
+	case TreeType_Indian_Rosewood:
+		return "Indian Rosewood"
+	case TreeType_Flame_Tree:
+		return "Flame Tree"
+	case TreeType_Tamarind:
+		return "Tamarind"
+	case TreeType_Podocarpus_Trees:
+		return "Podocarpus Trees"
+	case TreeType_Alder:
+		return "Alder"
+	case TreeType_Tree_Ferns:
+		return "Tree Ferns"
+	case TreeType_Magnolia:
+		return "Magnolia"
+	case TreeType_Bamboo:
+		return "Bamboo"
+	case TreeType_Ironwood:
+		return "Ironwood"
+	case TreeType_Ebony:
+		return "Ebony"
+	case TreeType_Meranti:
+		return "Meranti"
+	case TreeType_Rosewood:
+		return "Rosewood"
+	case TreeType_Nutmeg_Tree:
+		return "Nutmeg Tree"
+	case TreeType_Mango_Tree:
+		return "Mango Tree"
+	case TreeType_Banyan_Tree:
+		return "Banyan Tree"
+	case TreeType_Jackfruit_Tree:
+		return "Jackfruit Tree"
+	case TreeType_Sandalwood:
+		return "Sandalwood"
+	case TreeType_Dipterocarp_Trees:
+		return "Dipterocarp Trees"
+	case TreeType_Acacia:
+		return "Acacia"
+	case TreeType_Baobab:
+		return "Baobab"
+	case TreeType_Marula_Tree:
+		return "Marula Tree"
+	case TreeType_Sausage_Tree:
+		return "Sausage Tree"
+	case TreeType_Terminalia:
+		return "Terminalia"
+	case TreeType_Mangrove_Palm:
+		return "Mangrove Palm"
+	case TreeType_Water_Tupelo:
+		return "Water Tupelo"
+	case TreeType_Swamp_Mahogany:
+		return "Swamp Mahogany"
+	case TreeType_Pond_Cypress:
+		return "Pond Cypress"
+	case TreeType_Melaleuca:
+		return "Melaleuca"
+	case TreeType_Rattan_Palm:
+		return "Rattan Palm"
+	case TreeType_Screw_Pine:
+		return "Screw Pine"
+	case TreeType_Water_Hickory:
+		return "Water Hickory"
+	case TreeType_Oil_Palm:
+		return "Oil Palm"
+	case TreeType_Red_Mangrove:
+		return "Red Mangrove"
+	case TreeType_Black_Mangrove:
+		return "Black Mangrove"
+	case TreeType_White_Mangrove:
+		return "White Mangrove"
+	case TreeType_Buttonwood:
+		return "Buttonwood"
+	case TreeType_Sea_Hibiscus:
+		return "Sea Hibiscus"
+	case TreeType_Oak:
+		return "Oak"
+	case TreeType_Maple:
+		return "Maple"
+	case TreeType_Beech:
+		return "Beech"
+	case TreeType_Birch:
+		return "Birch"
+	case TreeType_Hickory:
+		return "Hickory"
+	case TreeType_Eastern_Hemlock:
+		return "Eastern Hemlock"
+	case TreeType_Douglas_Fir:
+		return "Douglas Fir"
+	case TreeType_Red_Maple:
+		return "Red Maple"
+	case TreeType_White_Pine:
+		return "White Pine"
+	case TreeType_Chestnut:
+		return "Chestnut"
+	case TreeType_Sitka_Spruce:
+		return "Sitka Spruce"
+	case TreeType_Western_Red_Cedar:
+		return "Western Red Cedar"
+	case TreeType_Bigleaf_Maple:
+		return "Bigleaf Maple"
+	case TreeType_Coast_Redwood:
+		return "Coast Redwood"
+	case TreeType_Yellow_Cedar:
+		return "Yellow Cedar"
+	case TreeType_Scots_Pine:
+		return "Scots Pine"
+	case TreeType_Norway_Spruce:
+		return "Norway Spruce"
+	case TreeType_Lodgepole_Pine:
+		return "Lodgepole Pine"
+	case TreeType_Bald_Cypress:
+		return "Bald Cypress"
+	case TreeType_Black_Gum:
+		return "Black Gum"
+	case TreeType_Sweetbay_Magnolia:
+		return "Sweetbay Magnolia"
+	case TreeType_Willow:
+		return "Willow"
+	case TreeType_Gumbo_Limbo:
+		return "Gumbo Limbo"
+	case TreeType_Ombú_Tree:
+		return "Ombú Tree"
+	case TreeType_Wild_Olive:
+		return "Wild Olive"
+	case TreeType_Cottonwood:
+		return "Cottonwood"
+	case TreeType_American_Elm:
+		return "American Elm"
+	case TreeType_Box_Elder:
+		return "Box Elder"
+	case TreeType_Tamarack:
+		return "Tamarack"
+	case TreeType_Black_Spruce:
+		return "Black Spruce"
+	case TreeType_Red_Cedar:
+		return "Red Cedar"
+	case TreeType_Krummholz_Pines:
+		return "Krummholz Pines"
+	case TreeType_Mountain_Hemlock:
+		return "Mountain Hemlock"
+	case TreeType_Juniper:
+		return "Juniper"
+	case TreeType_Dwarf_Willow:
+		return "Dwarf Willow"
+	case TreeType_Bristlecone_Pine:
+		return "Bristlecone Pine"
+	case TreeType_Dwarf_Birch:
+		return "Dwarf Birch"
+	case TreeType_Arctic_Willow:
+		return "Arctic Willow"
+	case TreeType_Siberian_Elm:
+		return "Siberian Elm"
+	case TreeType_Pinyon_Pine:
+		return "Pinyon Pine"
+	case TreeType_Olive_Trees:
+		return "Olive Trees"
+	case TreeType_Carob_Tree:
+		return "Carob Tree"
+	case TreeType_Aleppo_Pine:
+		return "Aleppo Pine"
+	case TreeType_Protea_Trees:
+		return "Protea Trees"
+	case TreeType_Silver_Tree:
+		return "Silver Tree"
+	case TreeType_Mesquite:
+		return "Mesquite"
+	case TreeType_Palo_Verde:
+		return "Palo Verde"
+	case TreeType_Date_Palm:
+		return "Date Palm"
+	case TreeType_Tamarisk:
+		return "Tamarisk"
+	case TreeType_Desert_Willow:
+		return "Desert Willow"
+	default:
+		return "Unknown Tree"
+	}
+}
 
 type ResourceZoneId int
 
@@ -479,12 +740,12 @@ type ResourceZoneId int
 // either manually or with buildings. Each colony region can have up to 10 different resource zones.
 type ResourceZone struct {
 	id           ResourceZoneId
-	landResource LandResource
+	landResource _landResource
 	amount       uint
 	workers      []AgentId
 }
 
-func NewResourceZone(id ResourceZoneId, resource LandResource, amount uint) ResourceZone {
+func NewResourceZone(id ResourceZoneId, resource _landResource, amount uint) ResourceZone {
 	return ResourceZone{landResource: resource, amount: amount, workers: make([]AgentId, 0, 20)}
 }
 

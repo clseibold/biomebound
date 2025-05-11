@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	sis "gitlab.com/sis-suite/smallnetinformationservices"
@@ -28,10 +29,9 @@ func TicksToInGameDuration(ticks int) time.Duration {
 
 type Context struct {
 	// previousTickTime time.Time
-	inGameTime   time.Time
-	ticker       *time.Ticker
-	firstColony  *Colony
-	secondColony *Colony
+	inGameTime time.Time
+	ticker     *time.Ticker
+	colonies   map[ColonyId]*Colony
 }
 
 func NewContext() *Context {
@@ -40,8 +40,12 @@ func NewContext() *Context {
 
 	context := new(Context)
 	context.ticker = time.NewTicker(TickRealTimeDuration)
-	context.firstColony = NewColony(context, "Test Colony", 6, true)
-	context.secondColony = NewColony(context, "Second Test Colony", 6, false)
+
+	context.colonies = make(map[ColonyId]*Colony, 3)
+	context.colonies[0] = NewColony(context, 0, "Test Colony", 6, true)
+	context.colonies[1] = NewColony(context, 1, "Second Test Colony", 6, false)
+	context.colonies[2] = NewColony(context, 2, "Third Test Colony", 6, false)
+
 	context.inGameTime = time.Date(0, 0, 0, 8, 0, 0, 0, time.UTC)
 	return context
 }
@@ -54,8 +58,13 @@ func (c *Context) SimulationLoop() {
 	for {
 		<-c.ticker.C
 		c.inGameTime = c.inGameTime.Add(TicksToInGameDuration(1))
-		c.firstColony.Tick()
-		c.secondColony.Tick()
+		// c.firstColony.Tick()
+		// c.secondColony.Tick()
+		var wg sync.WaitGroup
+		for _, colony := range c.colonies {
+			go colony.Tick(&wg)
+		}
+		wg.Wait()
 	}
 }
 
@@ -66,28 +75,27 @@ func (c *Context) Attach(s sis.ServeMux) {
 	s.AddRoute("/world-map/", PrintWorldMap)
 	s.AddRoute("/explore/", c.ExploreWorld)
 
-	group := s.Group("/test/")
-	group.AddRoute("/", c.firstColony.ColonyPage)
-	group.AddRoute("/resource_zone/:id/", c.firstColony.ResourceZonePage)
-	group.AddRoute("/resource_zone/:id/add_worker", c.firstColony.AddWorkerPage)
-	group.AddRoute("/resource_zone/:id/remove_worker", c.firstColony.RemoveWorkerPage)
-
-	group2 := s.Group("/second-test/")
-	group2.AddRoute("/", c.secondColony.ColonyPage)
-	group2.AddRoute("/resource_zone/:id/", c.secondColony.ResourceZonePage)
-	group2.AddRoute("/resource_zone/:id/add_worker", c.secondColony.AddWorkerPage)
-	group2.AddRoute("/resource_zone/:id/remove_worker", c.secondColony.RemoveWorkerPage)
+	group := s.Group("/:colony/")
+	group.AddRoute("/", c.ColonyPage)
+	group.AddRoute("/resource_zone/:id/", c.ResourceZonePage)
+	group.AddRoute("/resource_zone/:id/add_worker", c.AddWorkerPage)
+	group.AddRoute("/resource_zone/:id/remove_worker", c.RemoveWorkerPage)
 }
 
 func (c *Context) Homepage(request *sis.Request) {
 	request.Heading(1, "Biomebound: Colony Stratum")
 	request.Gemini("\n")
+
 	request.Link("/about/", "About")
-	request.Link("/test/", "Test Colony")
-	request.Link("/second-test/", "Second Test Colony")
-	request.Gemini("\n")
 	request.Link("/world-map/", "World Map")
 	request.Link("/explore/?25,25", "Explore World Map")
+	request.Gemini("\n")
+
+	request.Heading(2, "Colonies")
+	for id, colony := range c.colonies {
+		request.Link(path.Join("/", strconv.Itoa(int(id)))+"/", colony.name)
+	}
+	request.Gemini("\n")
 }
 
 func (c *Context) About(request *sis.Request) {
@@ -173,7 +181,11 @@ func (c *Context) ExploreWorld(request *sis.Request) {
 
 // TODO: When you create a new colony, create a background description of how the people got there.
 
-func (colony *Colony) ColonyPage(request *sis.Request) {
+func (c *Context) ColonyPage(request *sis.Request) {
+	colonyStr := request.GetParam("colony")
+	colonyId, _ := strconv.Atoi(colonyStr)
+	colony := c.colonies[ColonyId(colonyId)]
+
 	request.Heading(1, colony.name)
 	request.Gemini("\n")
 
@@ -202,12 +214,12 @@ func (colony *Colony) ColonyPage(request *sis.Request) {
 	}
 	request.Gemini(fmt.Sprintf("Map Location: (%d, %d)\n", colony.tileLocation.X, colony.tileLocation.Y))
 	request.Gemini(fmt.Sprintf("Population:   %d (%d unemployed)\n", len(colony.agents), unemployedAgents))
-	request.Gemini(fmt.Sprintf("Food:         %d (%+.2f/workday)\n", colony.resourceCounts[Resource_Berries], math.Ceil(colony.currentProduction[Resource_Berries]-colony.currentConsumption[Resource_Berries])*TicksPerInGameWorkDay)) // TODO: Count *all* food sources
+	request.Gemini(fmt.Sprintf("Food:         %d (%+.2f/workday)\n", colony.resourceCounts[Resource(Resource_Berries)], math.Ceil(colony.currentProduction[Resource(Resource_Berries)]-colony.currentConsumption[Resource(Resource_Berries)])*TicksPerInGameWorkDay)) // TODO: Count *all* food sources
 	request.Gemini(fmt.Sprintf("Water:        %d (+0/workday)\n", colony.resourceCounts[Resource_Water]))
-	request.Gemini(fmt.Sprintf("Oak Logs:     %d (%+.2f/workday | %+.2f)\n", colony.resourceCounts[Resource_Oak_Logs], math.Ceil(colony.currentProduction[Resource_Oak_Logs]-colony.currentConsumption[Resource_Oak_Logs])*TicksPerInGameWorkDay, LandResource_Forest_Oak.PerDayProductionPerAgent()/24*10))
-	request.Gemini(fmt.Sprintf("Granite:      %d (%+.2f/workday)\n", colony.resourceCounts[Resource_Granite], math.Ceil(colony.currentProduction[Resource_Granite]-colony.currentConsumption[Resource_Granite])*TicksPerInGameWorkDay))
-	request.Gemini(fmt.Sprintf("Coal:         %d (+0/workday)\n", colony.resourceCounts[Resource_Coal]))
-	request.Gemini(fmt.Sprintf("Iron:         %d (+0/workday)\n", colony.resourceCounts[Resource_Iron]))
+	request.Gemini(fmt.Sprintf("Oak Logs:     %d (%+.2f/workday | %+.2f)\n", colony.resourceCounts[Resource_Logs(TreeType_Oak)], math.Ceil(colony.currentProduction[Resource_Logs(TreeType_Oak)]-colony.currentConsumption[Resource_Logs(TreeType_Oak)])*TicksPerInGameWorkDay, LandResource_Woods(TreeType_Oak).PerDayProductionPerAgent()/24*10))
+	request.Gemini(fmt.Sprintf("Granite:      %d (%+.2f/workday)\n", colony.resourceCounts[Resource(Resource_Granite)], math.Ceil(colony.currentProduction[Resource(Resource_Granite)]-colony.currentConsumption[Resource(Resource_Granite)])*TicksPerInGameWorkDay))
+	request.Gemini(fmt.Sprintf("Coal:         %d (+0/workday)\n", colony.resourceCounts[Resource(Resource_Coal)]))
+	request.Gemini(fmt.Sprintf("Iron:         %d (+0/workday)\n", colony.resourceCounts[Resource(Resource_Iron)]))
 	// request.Gemini(fmt.Sprintf("Production Factor: %d\n", colony.productionFactor)) // The efficiency of all production in colony
 	// request.Gemini(fmt.Sprintf("Next Update in")) // TODO: Get real-time duration till next building update.
 
@@ -232,7 +244,7 @@ func (colony *Colony) ColonyPage(request *sis.Request) {
 	// Resource Zones List
 	request.Heading(2, "Natural Resource Zones")
 	for i, zone := range colony.landResources {
-		if zone.landResource == LandResource_Unknown {
+		if zone.landResource == LandResource(LandResource_Unknown) {
 			continue
 		}
 
@@ -246,7 +258,11 @@ func (colony *Colony) ColonyPage(request *sis.Request) {
 	// Action Links
 }
 
-func (colony *Colony) ResourceZonePage(request *sis.Request) {
+func (c *Context) ResourceZonePage(request *sis.Request) {
+	colonyStr := request.GetParam("colony")
+	colonyId, _ := strconv.Atoi(colonyStr)
+	colony := c.colonies[ColonyId(colonyId)]
+
 	resourceId, _ := strconv.Atoi(request.GetParam("id"))
 	zone := &colony.landResources[resourceId]
 
@@ -265,7 +281,11 @@ func (colony *Colony) ResourceZonePage(request *sis.Request) {
 	request.Link("/", "Back to Colony Overview")
 }
 
-func (colony *Colony) AddWorkerPage(request *sis.Request) {
+func (c *Context) AddWorkerPage(request *sis.Request) {
+	colonyStr := request.GetParam("colony")
+	colonyId, _ := strconv.Atoi(colonyStr)
+	colony := c.colonies[ColonyId(colonyId)]
+
 	resourceId, _ := strconv.Atoi(request.GetParam("id"))
 	zone := &colony.landResources[resourceId]
 
@@ -283,7 +303,11 @@ func (colony *Colony) AddWorkerPage(request *sis.Request) {
 	request.Redirect("/resource_zone/%s/", request.GetParam("id"))
 }
 
-func (colony *Colony) RemoveWorkerPage(request *sis.Request) {
+func (c *Context) RemoveWorkerPage(request *sis.Request) {
+	colonyStr := request.GetParam("colony")
+	colonyId, _ := strconv.Atoi(colonyStr)
+	colony := c.colonies[ColonyId(colonyId)]
+
 	resourceId, _ := strconv.Atoi(request.GetParam("id"))
 	zone := &colony.landResources[resourceId]
 	zone.RemoveLastWorker(colony)

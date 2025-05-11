@@ -488,10 +488,10 @@ func generatePlateaus(seed int64) {
 	plateauNoise := perlin.NewPerlin(1.8, 3.0, 2, seed+42)
 
 	// Parameters for plateau generation
-	plateauThreshold := 0.54       // Higher value = fewer plateaus
-	plateauHeightBase := 0.65      // Base elevation for plateaus (higher than hills)
-	plateauHeightVariation := 0.15 // How much elevation varies between plateaus
-	plateauFlatness := 0.85        // How flat plateaus are (higher = flatter)
+	plateauThreshold := 0.54                          // Higher value = fewer plateaus
+	plateauHeightVariation := 0.15                    // How much elevation varies between plateaus
+	plateauHeightBase := 0.5 + plateauHeightVariation // Base elevation for plateaus (higher than hills)
+	// plateauFlatness := 0.85                           // How flat plateaus are (higher = flatter)
 
 	// First pass - identify potential plateau regions
 	potentialPlateaus := 0
@@ -534,19 +534,21 @@ func generatePlateaus(seed int64) {
 
 					// Calculate plateau height - varying between plateaus but flat within each
 					// Ensure plateaus are higher than hills (0.5-0.8 range)
-					plateauHeight := plateauHeightBase + regionHeight*plateauHeightVariation
+					plateauHeight := plateauHeightBase + (regionHeight+1)*(plateauHeightVariation/2)
+					newHeight := plateauHeight
 
 					// Blend between original height and plateau height
-					blendStrength := (plateauValue - plateauThreshold) * 3.0 // TODO: This blendStrength is causing problems (blending too much)
-					blendStrength = math.Min(blendStrength, plateauFlatness)
+					// blendStrength := (plateauValue - plateauThreshold) * 3.0 // TODO: This blendStrength is causing problems (blending too much)
+					// blendStrength = math.Min(blendStrength, plateauFlatness)
 
 					// Calculate the new height as a blend between original and plateau, capping at 0.9
-					newHeight := Map[y][x].altitude*(1-blendStrength) + plateauHeight*blendStrength
+					//newHeight := Map[y][x].altitude*(1-blendStrength) + plateauHeight*blendStrength
 
 					// Ensure plateau is at least 0.2 higher than previous height
 					heightDifference := 0.2
 					if newHeight < Map[y][x].altitude+heightDifference {
-						newHeight = Map[y][x].altitude + heightDifference
+						diff := newHeight - Map[y][x].altitude
+						newHeight = Map[y][x].altitude + (heightDifference - diff)
 					}
 
 					// Ensure the plateau height is above the minimum threshold

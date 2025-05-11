@@ -2,18 +2,22 @@ package biomebound
 
 import (
 	"fmt"
+	"sync"
 )
 
 // TODO: Buildings and Agents should have a number of ticks that they've been working/turned on for when we switch to production
 // going over multiple ticks (a cycle).
 
 var beginnerResourceCounts = [Resource_Max]uint{
-	Resource_Oak_Logs: 0,
+	_resource(_landResource_Woods) | (_resource(TreeType_Oak) << 8): 0,
 }
+
+type ColonyId int
 
 type Colony struct {
 	// TODO: agents are array-of-structs atm. Potentially turn into struct of arrays later. Each agent is a state machine?
 	context        *Context
+	Id             ColonyId
 	tileLocation   TileLocation
 	name           string
 	agents         []Agent
@@ -80,8 +84,9 @@ func FindBeginnerTileLocation() (tileLocation TileLocation) {
 	return tileLocation
 }
 
-func NewColony(context *Context, name string, initialPopulationSize uint, first bool) *Colony {
+func NewColony(context *Context, id ColonyId, name string, initialPopulationSize uint, first bool) *Colony {
 	colony := new(Colony)
+	colony.Id = id
 	colony.context = context
 	if first {
 		colony.tileLocation = TileLocation{X: 5, Y: 0}
@@ -125,14 +130,18 @@ func NewColony(context *Context, name string, initialPopulationSize uint, first 
 	treeArea := trunkArea + denseForestTreeSpace // square meters
 	smallForestArea := 50000                     // square meters
 	numberOfTrees := smallForestArea / treeArea
-	colony.landResources[0] = NewResourceZone(0, LandResource_Forest_Oak, uint(numberOfTrees))
-	colony.landResources[1] = NewResourceZone(1, LandResource_Granite, 20000)
-	colony.landResources[2] = NewResourceZone(2, LandResource_Berries, 40000)
+	colony.landResources[0] = NewResourceZone(0, LandResource_Woods(TreeType_Oak), uint(numberOfTrees))
+	colony.landResources[1] = NewResourceZone(1, LandResource(LandResource_Granite), 20000)
+	colony.landResources[2] = NewResourceZone(2, LandResource(LandResource_Berries), 40000)
 
 	return colony
 }
 
-func (colony *Colony) Tick() {
+func (colony *Colony) Tick(wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer func() {
+		wg.Done()
+	}()
 	// Commit previous tick's resource production and consumption numbers to storage.
 	// This should always be the very first thing done in a tick.
 	colony.CommitProductionAndConsumption()
@@ -164,7 +173,7 @@ func (colony *Colony) Tick() {
 	// Go through all resource zones (and their buildings/technologies) to set next tick's initial resource production and consumption numbers
 	for i, _ := range colony.landResources {
 		zone := &colony.landResources[i]
-		if zone.landResource == LandResource_Unknown {
+		if zone.landResource == LandResource(LandResource_Unknown) {
 			continue
 		}
 
@@ -200,7 +209,7 @@ func (colony *Colony) CommitProductionAndConsumption() {
 	// Readjust the production numbers based on the amount (if necessary, but this should already be done in the Tick() function!)
 	for i := range colony.landResources {
 		zone := &colony.landResources[i]
-		if zone.landResource == LandResource_Unknown {
+		if zone.landResource == LandResource(LandResource_Unknown) {
 			continue
 		}
 
