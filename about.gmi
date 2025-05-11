@@ -1,0 +1,55 @@
+# About Biomebound
+
+Biomebound is a text-based colony management simulation game where you guide a small group of colonists in establishing and growing a sustainable settlement in a vast procedurally-generated world. The game focuses on thoughtful resource management, environmental adaptation, and inter-colony trade.
+
+## Core Features
+
+* Rich Environmental Simulation: Each colony exists on a detailed 10 square kilometer tile with its own unique biome, climate, terrain, and natural resources. The environment affects everything from resource availability to colonist well-being.
+
+* Realistic Time System: The game runs in real-time with a 4:1 time compression - every real-world day equals four in-game days. Colonists work during daylight hours and rest at night, with their schedules affected by seasonal daylight changes based on latitude.
+
+* Complex Resource Management: Manage renewable and non-renewable resources including various types of wood from different tree species; mineral deposits like coal, iron, and precious metals; water sources including rivers, lakes, and springs; food sources such as berries, crops, and foraged items
+
+* Dynamic Colony Development: Your colonists have individual stats, skills, and needs. Health and stress levels affect productivity; sleep and nutrition requirements must be balanced; work assignments determine colony efficiency; population grows naturally and through immigration based on colony conditions
+
+## Multiplayer World
+
+Biomebound takes place in a persistent online world where colonies can:
+* Establish trade routes with other player colonies
+* Specialize in unique research paths
+* Share resources and knowledge
+* Adapt to neighboring colony dynamics
+
+## Environmental Variety
+
+Your colony might be located in any of several distinct environments:
+* Temperate forests rich in timber
+* Tropical regions with year-round growing seasons
+* Mountain valleys with mineral wealth
+* Coastal areas perfect for trade
+* Arctic regions requiring careful resource management
+* Desert zones demanding water conservation
+
+Each location presents unique challenges and opportunities that shape your colony's development path.
+
+## Getting Started
+
+New colonies begin with 6 colonists and must quickly establish:
+* Basic resource gathering
+* Food and water security
+* Initial shelter
+* Essential workplaces
+
+Success requires understanding your environment and making strategic decisions about resource allocation and development priorities.
+
+## Time Investment
+
+The game is designed for both casual and dedicated players:
+* Major activities operate on day-long cycles
+* Colony development occurs at a measured pace
+* Systems can run in the background while you're away
+* Multiple management options for different play styles
+
+Join us in building sustainable colonies in a living, breathing world where every decision matters and every environment offers unique possibilities for growth and prosperity.
+
+=> / Return to Homepage

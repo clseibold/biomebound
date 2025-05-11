@@ -16,6 +16,9 @@ import (
 //go:embed design.md
 var designDocument string
 
+//go:embed about.gmi
+var aboutPage string
+
 const TickRealTimeDuration = time.Second
 const InGameSecondsPerTick int = 4 // NOTE: I could get 7 in-game days per real-time day if I switched this to 7 igs per tick.
 const WorkHours = 10
@@ -99,17 +102,19 @@ func (c *Context) Homepage(request *sis.Request) {
 }
 
 func (c *Context) About(request *sis.Request) {
-	request.Heading(1, "About Game")
-	request.Gemini(`
-Biomebound is an MMO colony-management survival game written primarily for Gemini.
+	request.Gemini(aboutPage)
+	/*request.Heading(1, "About Game")
+		request.Gemini(`
+	Biomebound is an MMO colony-management survival game written primarily for Gemini.
 
-Four in-game days equals one real-time day.
+	Four in-game days equals one real-time day.
 
-Each colony has a set of resource zones. These are zones of resources that are harvested from the land. The resources available from resource zones are dependent on the location, biome, and weather of the colony.
+	Each colony has a set of resource zones. These are zones of resources that are harvested from the land. The resources available from resource zones are dependent on the location, biome, and weather of the colony.
 
-=> / Homepage
-=> /design/ Design Document
-`) // TODO
+	=> / Homepage
+	=> /design/ Design Document
+	`) // TODO
+	*/
 }
 
 func (c *Context) DesignDocument(request *sis.Request) {
@@ -196,7 +201,7 @@ func (c *Context) ColonyPage(request *sis.Request) {
 	// Water and Food consumption per person
 
 	unemployedAgents := 0
-	for id, _ := range colony.agents {
+	for id := range colony.agents {
 		a := &colony.agents[id]
 		if a.assignedZone == -1 {
 			unemployedAgents += 1

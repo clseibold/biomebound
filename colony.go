@@ -154,7 +154,7 @@ func (colony *Colony) Tick(wg *sync.WaitGroup) {
 
 	// The next thing is to update the work/idle/sleep state of each agent based on the current time, day, etc. and their assigned workplace.
 	if colony.context.IsWorkTime() {
-		for id, _ := range colony.agents {
+		for id := range colony.agents {
 			a := &colony.agents[id]
 			if a.assignedZone != -1 {
 				a.state = AgentState_Work
@@ -163,12 +163,12 @@ func (colony *Colony) Tick(wg *sync.WaitGroup) {
 			}
 		}
 	} else if colony.context.IsSleepTime() {
-		for id, _ := range colony.agents {
+		for id := range colony.agents {
 			a := &colony.agents[id]
 			a.state = AgentState_Sleep
 		}
 	} else if colony.context.IsFreeTime() {
-		for id, _ := range colony.agents {
+		for id := range colony.agents {
 			a := &colony.agents[id]
 			a.state = AgentState_Idle
 		}
@@ -177,7 +177,7 @@ func (colony *Colony) Tick(wg *sync.WaitGroup) {
 	// Design TODO: The current tick's consumption always takes from storage and never from the current tick's production?
 
 	// Go through all resource zones (and their buildings/technologies) to set next tick's initial resource production and consumption numbers
-	for i, _ := range colony.landResources {
+	for i := range colony.landResources {
 		zone := &colony.landResources[i]
 		if zone.landResource == LandResource(LandResource_Unknown) {
 			continue
