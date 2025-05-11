@@ -88,11 +88,11 @@ func (resource _landResource) PerDayProductionPerAgent() float64 {
 	case _landResource_Woods:
 		return 100 // Trees - 100 trees cut per 24 hours, 10 to 50 trees sawmilled per day
 	case LandResource_Coal:
-		return 0
+		return 100 // TODO
 	case LandResource_Clay:
 		return 0
 	case LandResource_Granite:
-		return 0
+		return 100 // TODO
 	case LandResource_Limestone:
 		return 0
 	case LandResource_Sandstone:
@@ -268,6 +268,102 @@ func (resource _landResource) ToString() string {
 	}
 }
 
+func (resource _landResource) GetDescription() string {
+	// Handle woods separately since they use tree types
+	if resource.Type() == _landResource_Woods {
+		return GetTreeDescription(resource.Tree())
+	}
+
+	switch resource.Type() {
+	case LandResource_Unknown:
+		return "An unknown resource lies here."
+
+	case LandResource_Dirt:
+		return "Rich earth suitable for basic construction and farming. The soil here varies in texture and composition, showing layers of organic matter mixed with minerals built up over countless seasons."
+
+	case LandResource_Pond:
+		return "A small body of still water reflects the sky like a mirror. The pond's edges are ringed with vegetation, and the occasional ripple betrays the presence of aquatic life beneath the surface."
+
+	case LandResource_Lake_Vertical:
+		return "A long, deep lake stretches north to south, its waters dark with depth. The steep banks suggest this lake may have been carved by ancient glaciers, leaving behind this reservoir of fresh water."
+
+	case LandResource_Lake_Horizontal:
+		return "A wide lake extends from east to west, its surface catching the light. The gradually sloping shores provide excellent access to the water, while wetland plants thrive in the shallows."
+
+	case LandResource_Coal:
+		return "Dark seams of coal run through the earth here, the preserved remains of ancient forests compressed over millions of years. This valuable fuel source was formed in prehistoric swamps and peat bogs."
+
+	case LandResource_Clay:
+		return "Beds of fine clay lie near the surface, their smooth texture perfect for pottery and brickmaking. The clay ranges in color from rich red to pale gray, depending on its mineral content."
+
+	case LandResource_Granite:
+		return "Massive granite formations rise from the earth, their crystalline structure sparkling in the light. This ancient igneous rock, formed deep within the earth, provides excellent building material."
+
+	case LandResource_Limestone:
+		return "Pale limestone deposits are exposed here, formed from countless ancient marine creatures. The rock is soft enough to work easily but durable enough to last centuries, making it perfect for construction."
+
+	case LandResource_Sandstone:
+		return "Layers of sandstone show beautiful ripple patterns from their formation in ancient seas. The stone ranges from pale yellow to deep red, each layer telling a story of different geological eras."
+
+	case LandResource_Marble:
+		return "Veins of marble run through the rock here, their crystalline structure refracting light. This metamorphic stone, transformed by heat and pressure, is prized for its beauty and durability."
+
+	case LandResource_Slate:
+		return "Sheets of slate cleave cleanly along natural planes, perfect for roofing and paving. This fine-grained stone, born of compressed clay, resists water and weathering admirably."
+
+	case LandResource_Iron:
+		return "Rich veins of iron ore streak through the rock, their rusty red color betraying their presence. This essential metal, trapped in mineral form, awaits extraction and smelting."
+
+	case LandResource_Aluminum:
+		return "Deposits of bauxite, the primary ore of aluminum, color the soil a distinctive reddish-brown. This lightweight metal's ore requires significant processing to yield its treasure."
+
+	case LandResource_Zinc:
+		return "Silvery gray zinc ore shows through the rock face, often mixed with other minerals. This essential metal, crucial for protecting iron and steel, lies waiting to be extracted."
+
+	case LandResource_Copper:
+		return "Distinctive green-blue copper deposits stain the surrounding rock, marking rich veins of this conductive metal. Ancient weathering has exposed these valuable ore deposits."
+
+	case LandResource_Nickel:
+		return "Streaks of nickel ore run through the rock, their presence marked by subtle color variations. This hardy metal, often found with iron, promises strong alloys when refined."
+
+	case LandResource_Tin:
+		return "Cassiterite, the primary ore of tin, shows as dark crystals in the surrounding rock. This essential component of bronze has drawn miners since ancient times."
+
+	case LandResource_Silver:
+		return "Glinting veins of silver ore thread through the darker rock, promising precious metal within. The ore typically contains lead and copper as well, requiring careful separation."
+
+	case LandResource_Gold:
+		return "Traces of gold glitter in the rock and soil, the precious metal trapped in quartz veins or alluvial deposits. These deposits have drawn prospectors throughout history."
+
+	case LandResource_Haygrass:
+		return "Thick stands of haygrass wave in the breeze, ready for harvesting. This versatile grass provides essential feed for livestock and can be stored for long periods."
+
+	case LandResource_RawRice:
+		return "Paddies of rice plants stand in shallow water, their green stems swaying gently. The grain-heavy heads bow with the weight of their precious cargo."
+
+	case LandResource_Berries:
+		return "Wild berry bushes grow in abundance here, their fruits ranging from deep purple to bright red. These natural sweet treats provide essential nutrients and can be preserved for winter."
+
+	case LandResource_Potatoes:
+		return "Hardy potato plants flourish in the soil, their valuable tubers growing unseen below. These reliable crops provide excellent nutrition and store well for long periods."
+
+	case LandResource_Corn:
+		return "Tall corn stalks reach for the sky, their leaves rustling in the wind. The golden ears of corn, wrapped in protective husks, promise a bountiful harvest."
+
+	case LandResource_Agave:
+		return "Spiky agave plants spread their thick, fleshy leaves in a rosette pattern. These desert-adapted plants store precious water and provide useful fibers."
+
+	case LandResource_Mushrooms:
+		return "Colonies of mushrooms sprout from the dark, rich soil, their caps ranging from tiny buttons to broad plates. These fungi thrive in the moist, shaded conditions."
+
+	case LandResource_Strawberries:
+		return "Low-growing strawberry plants carpet the ground, their white flowers and red fruits dotting the green leaves. The sweet berries are a valuable source of nutrition."
+
+	default:
+		return "A resource deposit of unknown type exists here."
+	}
+}
+
 // These are the resources that have been harvested or crafted.
 type _resource uint16
 
@@ -433,306 +529,6 @@ func (resource _resource) ToString() string {
 }
 
 // Note: Some foods when eaten raw can give food poisoning
-
-// There are 73 tree types.
-type TreeType uint8
-
-const (
-	TreeType_Unknown TreeType = iota
-	TreeType_Mahogany
-	TreeType_Kapok_Tree
-	TreeType_Brazil_Nut_Tree
-	TreeType_Rubber_Tree
-	TreeType_Strangler_Fig
-	TreeType_Teak
-	TreeType_Sal_Tree
-	TreeType_Indian_Rosewood
-	TreeType_Flame_Tree
-	TreeType_Tamarind
-	TreeType_Podocarpus_Trees
-	TreeType_Alder
-	TreeType_Tree_Ferns
-	TreeType_Magnolia
-	TreeType_Bamboo
-	TreeType_Ironwood
-	TreeType_Ebony
-	TreeType_Meranti
-	TreeType_Rosewood
-	TreeType_Nutmeg_Tree
-	TreeType_Mango_Tree
-	TreeType_Banyan_Tree
-	TreeType_Jackfruit_Tree
-	TreeType_Sandalwood
-	TreeType_Dipterocarp_Trees
-	TreeType_Acacia
-	TreeType_Baobab
-	TreeType_Marula_Tree
-	TreeType_Sausage_Tree
-	TreeType_Terminalia
-	TreeType_Mangrove_Palm
-	TreeType_Water_Tupelo
-	TreeType_Swamp_Mahogany
-	TreeType_Pond_Cypress
-	TreeType_Melaleuca
-	TreeType_Rattan_Palm
-	TreeType_Screw_Pine
-	TreeType_Water_Hickory
-	TreeType_Oil_Palm
-	TreeType_Red_Mangrove
-	TreeType_Black_Mangrove
-	TreeType_White_Mangrove
-	TreeType_Buttonwood
-	TreeType_Sea_Hibiscus
-	TreeType_Oak // incl. Swamp Chestnut Oak, Cork Oak, White&Red Oak
-	TreeType_Maple
-	TreeType_Beech
-	TreeType_Birch
-	TreeType_Hickory
-	TreeType_Eastern_Hemlock
-	TreeType_Douglas_Fir
-	TreeType_Red_Maple
-	TreeType_White_Pine
-	TreeType_Chestnut
-	TreeType_Sitka_Spruce
-	TreeType_Western_Red_Cedar
-	TreeType_Bigleaf_Maple
-	TreeType_Coast_Redwood
-	TreeType_Yellow_Cedar
-	TreeType_Scots_Pine
-	TreeType_Norway_Spruce
-	TreeType_Lodgepole_Pine
-	TreeType_Bald_Cypress
-	TreeType_Black_Gum
-	TreeType_Sweetbay_Magnolia
-	TreeType_Willow
-	TreeType_Gumbo_Limbo
-	TreeType_Ombú_Tree
-	TreeType_Wild_Olive
-	TreeType_Cottonwood
-	TreeType_American_Elm
-	TreeType_Box_Elder
-	TreeType_Tamarack
-	TreeType_Black_Spruce
-	TreeType_Red_Cedar
-	TreeType_Krummholz_Pines
-	TreeType_Mountain_Hemlock
-	TreeType_Juniper
-	TreeType_Dwarf_Willow
-	TreeType_Bristlecone_Pine
-	TreeType_Dwarf_Birch
-	TreeType_Arctic_Willow
-	TreeType_Siberian_Elm
-	TreeType_Pinyon_Pine
-	TreeType_Olive_Trees
-	TreeType_Carob_Tree
-	TreeType_Aleppo_Pine
-	TreeType_Protea_Trees
-	TreeType_Silver_Tree
-	TreeType_Mesquite
-	TreeType_Palo_Verde
-	TreeType_Date_Palm
-	TreeType_Tamarisk
-	TreeType_Desert_Willow
-
-	TreeType_Max
-)
-
-func (treeType TreeType) ToString() string {
-	switch treeType {
-	case TreeType_Unknown:
-		return "Unknown"
-	case TreeType_Mahogany:
-		return "Mahogany"
-	case TreeType_Kapok_Tree:
-		return "Kapok Tree"
-	case TreeType_Brazil_Nut_Tree:
-		return "Brazil Nut Tree"
-	case TreeType_Rubber_Tree:
-		return "Rubber Tree"
-	case TreeType_Strangler_Fig:
-		return "Strangler Fig"
-	case TreeType_Teak:
-		return "Teak"
-	case TreeType_Sal_Tree:
-		return "Sal Tree"
-	case TreeType_Indian_Rosewood:
-		return "Indian Rosewood"
-	case TreeType_Flame_Tree:
-		return "Flame Tree"
-	case TreeType_Tamarind:
-		return "Tamarind"
-	case TreeType_Podocarpus_Trees:
-		return "Podocarpus Trees"
-	case TreeType_Alder:
-		return "Alder"
-	case TreeType_Tree_Ferns:
-		return "Tree Ferns"
-	case TreeType_Magnolia:
-		return "Magnolia"
-	case TreeType_Bamboo:
-		return "Bamboo"
-	case TreeType_Ironwood:
-		return "Ironwood"
-	case TreeType_Ebony:
-		return "Ebony"
-	case TreeType_Meranti:
-		return "Meranti"
-	case TreeType_Rosewood:
-		return "Rosewood"
-	case TreeType_Nutmeg_Tree:
-		return "Nutmeg Tree"
-	case TreeType_Mango_Tree:
-		return "Mango Tree"
-	case TreeType_Banyan_Tree:
-		return "Banyan Tree"
-	case TreeType_Jackfruit_Tree:
-		return "Jackfruit Tree"
-	case TreeType_Sandalwood:
-		return "Sandalwood"
-	case TreeType_Dipterocarp_Trees:
-		return "Dipterocarp Trees"
-	case TreeType_Acacia:
-		return "Acacia"
-	case TreeType_Baobab:
-		return "Baobab"
-	case TreeType_Marula_Tree:
-		return "Marula Tree"
-	case TreeType_Sausage_Tree:
-		return "Sausage Tree"
-	case TreeType_Terminalia:
-		return "Terminalia"
-	case TreeType_Mangrove_Palm:
-		return "Mangrove Palm"
-	case TreeType_Water_Tupelo:
-		return "Water Tupelo"
-	case TreeType_Swamp_Mahogany:
-		return "Swamp Mahogany"
-	case TreeType_Pond_Cypress:
-		return "Pond Cypress"
-	case TreeType_Melaleuca:
-		return "Melaleuca"
-	case TreeType_Rattan_Palm:
-		return "Rattan Palm"
-	case TreeType_Screw_Pine:
-		return "Screw Pine"
-	case TreeType_Water_Hickory:
-		return "Water Hickory"
-	case TreeType_Oil_Palm:
-		return "Oil Palm"
-	case TreeType_Red_Mangrove:
-		return "Red Mangrove"
-	case TreeType_Black_Mangrove:
-		return "Black Mangrove"
-	case TreeType_White_Mangrove:
-		return "White Mangrove"
-	case TreeType_Buttonwood:
-		return "Buttonwood"
-	case TreeType_Sea_Hibiscus:
-		return "Sea Hibiscus"
-	case TreeType_Oak:
-		return "Oak"
-	case TreeType_Maple:
-		return "Maple"
-	case TreeType_Beech:
-		return "Beech"
-	case TreeType_Birch:
-		return "Birch"
-	case TreeType_Hickory:
-		return "Hickory"
-	case TreeType_Eastern_Hemlock:
-		return "Eastern Hemlock"
-	case TreeType_Douglas_Fir:
-		return "Douglas Fir"
-	case TreeType_Red_Maple:
-		return "Red Maple"
-	case TreeType_White_Pine:
-		return "White Pine"
-	case TreeType_Chestnut:
-		return "Chestnut"
-	case TreeType_Sitka_Spruce:
-		return "Sitka Spruce"
-	case TreeType_Western_Red_Cedar:
-		return "Western Red Cedar"
-	case TreeType_Bigleaf_Maple:
-		return "Bigleaf Maple"
-	case TreeType_Coast_Redwood:
-		return "Coast Redwood"
-	case TreeType_Yellow_Cedar:
-		return "Yellow Cedar"
-	case TreeType_Scots_Pine:
-		return "Scots Pine"
-	case TreeType_Norway_Spruce:
-		return "Norway Spruce"
-	case TreeType_Lodgepole_Pine:
-		return "Lodgepole Pine"
-	case TreeType_Bald_Cypress:
-		return "Bald Cypress"
-	case TreeType_Black_Gum:
-		return "Black Gum"
-	case TreeType_Sweetbay_Magnolia:
-		return "Sweetbay Magnolia"
-	case TreeType_Willow:
-		return "Willow"
-	case TreeType_Gumbo_Limbo:
-		return "Gumbo Limbo"
-	case TreeType_Ombú_Tree:
-		return "Ombú Tree"
-	case TreeType_Wild_Olive:
-		return "Wild Olive"
-	case TreeType_Cottonwood:
-		return "Cottonwood"
-	case TreeType_American_Elm:
-		return "American Elm"
-	case TreeType_Box_Elder:
-		return "Box Elder"
-	case TreeType_Tamarack:
-		return "Tamarack"
-	case TreeType_Black_Spruce:
-		return "Black Spruce"
-	case TreeType_Red_Cedar:
-		return "Red Cedar"
-	case TreeType_Krummholz_Pines:
-		return "Krummholz Pines"
-	case TreeType_Mountain_Hemlock:
-		return "Mountain Hemlock"
-	case TreeType_Juniper:
-		return "Juniper"
-	case TreeType_Dwarf_Willow:
-		return "Dwarf Willow"
-	case TreeType_Bristlecone_Pine:
-		return "Bristlecone Pine"
-	case TreeType_Dwarf_Birch:
-		return "Dwarf Birch"
-	case TreeType_Arctic_Willow:
-		return "Arctic Willow"
-	case TreeType_Siberian_Elm:
-		return "Siberian Elm"
-	case TreeType_Pinyon_Pine:
-		return "Pinyon Pine"
-	case TreeType_Olive_Trees:
-		return "Olive Trees"
-	case TreeType_Carob_Tree:
-		return "Carob Tree"
-	case TreeType_Aleppo_Pine:
-		return "Aleppo Pine"
-	case TreeType_Protea_Trees:
-		return "Protea Trees"
-	case TreeType_Silver_Tree:
-		return "Silver Tree"
-	case TreeType_Mesquite:
-		return "Mesquite"
-	case TreeType_Palo_Verde:
-		return "Palo Verde"
-	case TreeType_Date_Palm:
-		return "Date Palm"
-	case TreeType_Tamarisk:
-		return "Tamarisk"
-	case TreeType_Desert_Willow:
-		return "Desert Willow"
-	default:
-		return "Unknown Tree"
-	}
-}
 
 type ResourceZoneId int
 

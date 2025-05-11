@@ -237,7 +237,7 @@ func PrintWorldMap(request *sis.Request) {
 
 	// Count land types, land features, and biomes for distribution charts
 	landTypeCounts := make(map[LandType]int)
-	landFeatureCounts := make([]int, 12)
+	landFeatureCounts := make([]int, 13)
 	biomeCounts := make(map[Biome]int, Biome_Max)
 
 	for y := range MapHeight {
@@ -285,6 +285,9 @@ func PrintWorldMap(request *sis.Request) {
 			if tile.hasSaltFlat {
 				landFeatureCounts[11]++
 			}
+			if tile.hasCoal {
+				landFeatureCounts[12]++
+			}
 
 			biomeCounts[tile.biome]++
 		}
@@ -326,7 +329,7 @@ func PrintWorldMap(request *sis.Request) {
 	}
 
 	// Land Feature Counts
-	landFeatureNames := [12]string{
+	landFeatureNames := [13]string{
 		"Deserts",
 		"Streams",
 		"Ponds",
@@ -339,6 +342,7 @@ func PrintWorldMap(request *sis.Request) {
 		"Game Trails",
 		"Seasonal Flood Areas",
 		"Salt Flats",
+		"Coal",
 	}
 
 	request.PlainText("\nLand Feature Distribution:\n")

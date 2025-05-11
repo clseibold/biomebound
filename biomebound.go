@@ -268,6 +268,8 @@ func (c *Context) ResourceZonePage(request *sis.Request) {
 
 	request.Heading(1, "Resource Zone: "+zone.landResource.ToString())
 	request.Gemini("\n")
+	request.Gemini(zone.landResource.GetDescription() + "\n")
+	request.Gemini("\n")
 
 	request.Gemini("```Statistics\n")
 	request.Gemini(fmt.Sprintf("Workers: %d / 20", len(zone.workers)))

@@ -55,7 +55,7 @@ func FindBeginnerTileLocation() (tileLocation TileLocation) {
 			}
 
 			// Mid-temperate or above
-			if tile.climate.avgTemp > .4 {
+			if tile.climate.avgTemp > .4 && tile.hasCoal {
 				tileLocation = TileLocation{X: x, Y: y}
 				foundSuitableTile = true
 			}
@@ -93,7 +93,10 @@ func NewColony(context *Context, id ColonyId, name string, initialPopulationSize
 	} else {
 		colony.tileLocation = FindBeginnerTileLocation()
 	}
-	Map[colony.tileLocation.Y][colony.tileLocation.X].occupied = true
+
+	tile := &Map[colony.tileLocation.Y][colony.tileLocation.X]
+	tile.occupied = true
+
 	colony.name = name
 	colony.agents = make([]Agent, initialPopulationSize)
 	colony.resourceCounts = beginnerResourceCounts
@@ -133,6 +136,9 @@ func NewColony(context *Context, id ColonyId, name string, initialPopulationSize
 	colony.landResources[0] = NewResourceZone(0, LandResource_Woods(TreeType_Oak), uint(numberOfTrees))
 	colony.landResources[1] = NewResourceZone(1, LandResource(LandResource_Granite), 20000)
 	colony.landResources[2] = NewResourceZone(2, LandResource(LandResource_Berries), 40000)
+	if tile.hasCoal {
+		colony.landResources[3] = NewResourceZone(2, LandResource(LandResource_Coal), 40000)
+	}
 
 	return colony
 }

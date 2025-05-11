@@ -64,6 +64,8 @@ type Tile struct {
 	hasFloodArea bool // Contains area that seasonally floods
 	hasSaltFlat  bool // Contains a small salt flat or mineral deposit
 
+	hasCoal bool
+
 	// TODO: Permafrost - arctic and subarctic regions that are close to the poles that have a layer of permanently frozen ground that contains soil and organic material. They happen when a region's average annual temperature is 0 Celsius or below for two consecutive years. The very top layer (active layer) of the permafrost melts in summer, but the lower layer remains frozen. It occurs with the following soil types: silty, or clayey soils, which both can retain moisture. Permafrost can occur in various biomes, including tundra, boreal forests, and some mountainous regions. The melting of the active layer in summer can form wetlands, lakes, and other hydrology features during summer.
 	// TODO: The southern pole on earth has an ice sheet layered on top of landmass. They form from the accumulation of snow and ice over time.
 
@@ -109,6 +111,7 @@ type Peak struct {
 
 func generateWorldMap() {
 	var seed int64 = 1239462936493264926
+	// var seed int64 = 8392346972398239469
 	rand := rand.New(rand.NewSource(seed))
 
 	// Generate mountain peaks
@@ -156,6 +159,8 @@ func generateWorldMap() {
 	assignBiomes()
 
 	generateGameTrails(seed)
+
+	generateCoalTiles(seed)
 }
 
 func generateMapMountainPeaks(rand *rand.Rand) []Peak {
@@ -488,9 +493,9 @@ func generatePlateaus(seed int64) {
 	plateauNoise := perlin.NewPerlin(1.8, 3.0, 2, seed+42)
 
 	// Parameters for plateau generation
-	plateauThreshold := 0.54                          // Higher value = fewer plateaus
-	plateauHeightVariation := 0.15                    // How much elevation varies between plateaus
-	plateauHeightBase := 0.5 + plateauHeightVariation // Base elevation for plateaus (higher than hills)
+	plateauThreshold := 0.54       // Higher value = fewer plateaus
+	plateauHeightBase := 0.5       // Base elevation for plateaus (higher than hills)
+	plateauHeightVariation := 0.15 // How much elevation varies between plateaus
 	// plateauFlatness := 0.85                           // How flat plateaus are (higher = flatter)
 
 	// First pass - identify potential plateau regions
@@ -618,61 +623,37 @@ func generatePlateaus(seed int64) {
 }
 
 func identifyValleys() {
-	// Create temporary array to store gradients
-	gradientMap := make([][]float64, MapHeight)
-	for i := range gradientMap {
-		gradientMap[i] = make([]float64, MapWidth)
-	}
-
-	// Calculate local gradients - how quickly altitude changes
 	for y := 1; y < MapHeight-1; y++ {
 		for x := 1; x < MapWidth-1; x++ {
-			// Skip water
-			if Map[y][x].altitude <= 0 {
+			// Skip water tiles
+			if Map[y][x].altitude <= 0 || Map[y][x].landType == LandType_Plateaus || Map[y][x].landType == LandType_Mountains {
 				continue
 			}
 
-			// Calculate average height difference with neighbors
-			totalDiff := 0.0
-			count := 0
+			// Get the current tile's altitude
+			currentHeight := Map[y][x].altitude
+			heightDiffThreshold := -0.05
 
-			for dy := -1; dy <= 1; dy++ {
-				for dx := -1; dx <= 1; dx++ {
-					if dx == 0 && dy == 0 {
-						continue
-					}
+			// Check left-right tiles
+			left := Map[y][x-1]
+			right := Map[y][x+1]
+			leftRightHeightDiff := ((currentHeight - left.altitude) + (currentHeight - right.altitude)) / 2
+			leftRightHigher := left.altitude > currentHeight && right.altitude > currentHeight && leftRightHeightDiff < heightDiffThreshold
+			// leftRightNonPlateau := left.landType != LandType_Plateaus && right.landType != LandType_Plateaus
 
-					nx, ny := x+dx, y+dy
-					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
-						heightDiff := Map[y][x].altitude - Map[ny][nx].altitude
-						totalDiff += heightDiff
-						count++
-					}
-				}
-			}
+			// Check top-bottom tiles
+			top := Map[y-1][x]
+			bottom := Map[y+1][x]
+			topBottomHeightDiff := ((currentHeight - top.altitude) + (currentHeight - bottom.altitude)) / 2
+			topBottomHigher := top.altitude > currentHeight && bottom.altitude > currentHeight && topBottomHeightDiff < heightDiffThreshold
+			// topBottomNonPlateau := top.landType != LandType_Plateaus && bottom.landType != LandType_Plateaus
 
-			// Average gradient
-			if count > 0 {
-				gradientMap[y][x] = totalDiff / float64(count)
-			}
-		}
-	}
+			// Determine if the tile is a valley
+			isValley := (leftRightHigher /*&& leftRightNonPlateau*/) || (topBottomHigher /*&& topBottomNonPlateau*/)
 
-	// Identify valleys - areas lower than surroundings
-	for y := 1; y < MapHeight-1; y++ {
-		for x := 1; x < MapWidth-1; x++ {
-			// Skip water
-			if Map[y][x].altitude <= 0 {
-				continue
-			}
-
-			// If we're lower than average surroundings and not too high
-			if gradientMap[y][x] < -0.05 && Map[y][x].altitude < 0.7 {
-				// Avoid marking plateaus or mountains as valleys
-				if Map[y][x].landType != LandType_Plateaus &&
-					Map[y][x].landType != LandType_Mountains {
-					Map[y][x].landType = LandType_Valleys
-				}
+			// Mark the tile as a valley if it meets the criteria
+			if isValley {
+				Map[y][x].landType = LandType_Valleys
 			}
 		}
 	}
@@ -3786,4 +3767,145 @@ func GetLatLongDescription(x, y int) string {
 	return fmt.Sprintf("%.2f°%s, %.2f°%s",
 		math.Abs(result.Latitude), latDir,
 		math.Abs(result.Longitude), longDir)
+}
+
+/*func generateCoalTiles(seed int64) {
+	// Create a Perlin noise generator
+	coalNoise := perlin.NewPerlin(2.0, 2.0, 3, seed)
+
+	for y := 0; y < MapHeight; y++ {
+		for x := 0; x < MapWidth; x++ {
+			tile := &Map[y][x]
+
+			// Skip water tiles or tiles already marked with coal
+			if tile.landType == LandType_Water || tile.hasCoal {
+				continue
+			}
+
+			// Base chance for coal
+			coalChance := 0.0
+
+			// Land type influence
+			switch tile.landType {
+			case LandType_Plains:
+				coalChance += 0.3
+			case LandType_Valleys:
+				coalChance += 0.4
+			case LandType_Plateaus:
+				coalChance += 0.2
+			case LandType_Hills:
+				coalChance += 0.1
+			}
+
+			// Biome influence
+			switch tile.biome {
+			case Biome_TemperateDeciduousForest:
+				coalChance += 0.4
+			case Biome_TemperateSwamp, Biome_TropicalSwampForest, Biome_CypressSwamp:
+				coalChance += 0.5
+			case Biome_BorealForest:
+				coalChance += 0.3
+			}
+
+			// Altitude influence
+			if tile.altitude > 0.1 && tile.altitude < 0.8 {
+				coalChance += 0.2
+			}
+
+			// Water features influence
+			if tile.hasMarsh || tile.hasFloodArea {
+				coalChance += 0.3
+			}
+
+			// Normalize the chance to ensure it doesn't exceed 1.0
+			coalChance = math.Min(coalChance, 1.0)
+
+			// Use Perlin noise to adjust the coal chance
+			noiseValue := (coalNoise.Noise2D(float64(x)/(MapWidth*0.1), float64(y)/(MapHeight*0.1)) + 1) / 2
+			coalChance *= noiseValue // Scale the chance by the noise value
+
+			// Determine if the tile has coal
+			if coalChance > 0.5 { // Threshold for coal presence
+				tile.hasCoal = true
+			}
+		}
+	}
+}*/
+
+func generateCoalTiles(seed int64) {
+	// Create a Perlin noise generator for coal deposits
+	coalNoise := perlin.NewPerlin(2.0, 2.0, 3, seed)
+
+	for y := 0; y < MapHeight; y++ {
+		for x := 0; x < MapWidth; x++ {
+			tile := &Map[y][x]
+
+			// Skip water and mountain tiles
+			if tile.landType == LandType_Water || tile.landType == LandType_Mountains {
+				continue
+			}
+
+			// Get base noise value for this location
+			noiseValue := (coalNoise.Noise2D(float64(x)/(MapWidth*0.1), float64(y)/(MapHeight*0.1)) + 1) / 2
+
+			// Coal forms in areas that were once swamps or forests and were buried
+			// Calculate suitability based on terrain and biome
+			suitability := 0.0
+
+			// Terrain suitability
+			switch tile.landType {
+			case LandType_Valleys:
+				suitability = 0.7 // Ancient river valleys often have coal
+			case LandType_Plains:
+				suitability = 0.5 // Plains can have buried organic material
+			case LandType_Hills:
+				suitability = 0.4 // Some hills contain exposed coal seams
+			case LandType_Plateaus:
+				suitability = 0.3 // Less common in plateaus
+			}
+
+			// Biome suitability (ancient organic material)
+			switch tile.biome {
+			case Biome_TemperateSwamp, Biome_TropicalSwampForest, Biome_CypressSwamp:
+				suitability += 0.4 // Swamps are excellent for coal formation
+			case Biome_TemperateDeciduousForest:
+				suitability += 0.3 // Forests provide organic material
+			case Biome_BorealForest:
+				suitability += 0.2 // Cooler forests still contribute
+			}
+
+			// Additional factors
+			if tile.hasMarsh || tile.hasFloodArea {
+				suitability += 0.2 // These areas collect organic material
+			}
+			if tile.hasPond {
+				suitability += 0.15 // Ponds can indicate past wetland conditions
+			}
+
+			// Check proximity to water bodies
+			for dy := -2; dy <= 2; dy++ {
+				for dx := -2; dx <= 2; dx++ {
+					nx, ny := x+dx, y+dy
+					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
+						if Map[ny][nx].altitude <= 0 { // Water tile
+							// Closer water has more influence
+							dist := math.Sqrt(float64(dx*dx + dy*dy))
+							if dist <= 2.0 {
+								suitability += 0.2 * (1.0 - dist/2.0)
+								break // Found nearby water, no need to check further
+							}
+						}
+					}
+				}
+			}
+
+			// Scale suitability by noise value for natural-looking deposits
+			coalChance := suitability * noiseValue
+
+			// Determine if coal is present
+			if coalChance > 0.5 {
+				tile.hasCoal = true
+			}
+		}
+	}
 }
