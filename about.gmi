@@ -8,9 +8,11 @@ Biomebound is a text-based colony management simulation game where you guide a s
 
 * Realistic Time System: The game runs in real-time with a 4:1 time compression - every real-world day equals four in-game days. Colonists work during daylight hours and rest at night, with their schedules affected by seasonal daylight changes based on latitude.
 
-* Complex Resource Management: Manage renewable and non-renewable resources including various types of wood from different tree species; mineral deposits like coal, iron, and precious metals; water sources including rivers, lakes, and springs; food sources such as berries, crops, and foraged items
+* Complex Resource Management: Manage renewable and non-renewable resources including over 70 types of wood from different tree species; mineral deposits like coal, iron, and precious metals; water sources including rivers, lakes, and springs; food sources such as berries, crops, and foraged items
 
-* Dynamic Colony Development: Your colonists have individual stats, skills, and needs. Health and stress levels affect productivity; sleep and nutrition requirements must be balanced; work assignments determine colony efficiency; population grows naturally and through immigration based on colony conditions
+* Dynamic Colony Development: Your colonists have individual stats, skills, and needs. Health and stress levels affect productivity; sleep and nutrition requirements must be balanced; work assignments determine colony efficiency; population grows naturally, and through immigration, based on colony conditions
+
+* Environmental Challenges: Your colony must manage the environment it is in, including seasonal temperature variations, weather impacts on productivity, terrain effects on resource accessibility, and biome-specific challenges and opportunities
 
 ## Multiplayer World
 
@@ -31,6 +33,27 @@ Your colony might be located in any of several distinct environments:
 * Desert zones demanding water conservation
 
 Each location presents unique challenges and opportunities that shape your colony's development path.
+
+## World Features
+
+Diverse Terrain Types:
+* Mountains and valleys
+* Plains and hills
+* Coastal regions
+* Lakes and rivers
+* Plateaus and highlands
+
+Climate Systems:
+* Temperature variations by latitude
+* Rainfall patterns
+* Seasonal changes
+* Weather effects
+
+Natural Resources:
+* Location-specific resources
+* Renewable and non-renewable sources
+* Varying quality and abundance
+* Strategic resource distribution
 
 ## Getting Started
 
