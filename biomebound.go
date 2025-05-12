@@ -63,9 +63,14 @@ func (c *Context) SimulationLoop() {
 		c.inGameTime = c.inGameTime.Add(TicksToInGameDuration(1))
 		// c.firstColony.Tick()
 		// c.secondColony.Tick()
-		var wg sync.WaitGroup
+		wg := &sync.WaitGroup{}
+		wg.Add(len(c.colonies))
 		for _, colony := range c.colonies {
-			go colony.Tick(&wg)
+			colony := colony
+			go func() {
+				defer wg.Done()
+				colony.Tick()
+			}()
 		}
 		wg.Wait()
 	}

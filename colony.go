@@ -2,7 +2,6 @@ package biomebound
 
 import (
 	"fmt"
-	"sync"
 )
 
 // TODO: Buildings and Agents should have a number of ticks that they've been working/turned on for when we switch to production
@@ -143,11 +142,7 @@ func NewColony(context *Context, id ColonyId, name string, initialPopulationSize
 	return colony
 }
 
-func (colony *Colony) Tick(wg *sync.WaitGroup) {
-	wg.Add(1)
-	defer func() {
-		wg.Done()
-	}()
+func (colony *Colony) Tick() {
 	// Commit previous tick's resource production and consumption numbers to storage.
 	// This should always be the very first thing done in a tick.
 	colony.CommitProductionAndConsumption()
