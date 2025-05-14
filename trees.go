@@ -99,6 +99,7 @@ const (
 	TreeType_Date_Palm
 	TreeType_Tamarisk
 	TreeType_Desert_Willow
+	TreeType_Balsam_Fir
 
 	TreeType_Max
 )
@@ -295,6 +296,8 @@ func (treeType TreeType) ToString() string {
 		return "Tamarisk"
 	case TreeType_Desert_Willow:
 		return "Desert Willow"
+	case TreeType_Balsam_Fir:
+		return "Balsam Fir"
 	default:
 		return "Unknown Tree"
 	}
@@ -572,6 +575,9 @@ func GetTreeDescription(treeType TreeType) string {
 
 	case TreeType_Desert_Willow:
 		return "Graceful desert willows bloom with orchid-like flowers, their slender branches dancing in desert breezes. The wood is light but strong, traditionally used for bow-making. These drought-adapted trees bring beauty to dry watercourses and canyon bottoms."
+
+	case TreeType_Balsam_Fir:
+		return "Slender balsam firs rise in perfect pyramids, their dark needles releasing a sweet resinous scent when crushed. The smooth gray bark is studded with small blisters containing aromatic resin. Though the wood is soft and perishable, these graceful trees are prized for their symmetry and fragrance. Their upright purple-brown cones gradually disintegrate on the branches, releasing winged seeds to the wind."
 
 	default:
 		return "A grove of trees grows here."

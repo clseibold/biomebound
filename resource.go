@@ -364,6 +364,10 @@ func (resource _landResource) GetDescription() string {
 	}
 }
 
+func (resource _landResource) IsWoodsType() bool {
+	return resource.Type() == _landResource_Woods
+}
+
 // These are the resources that have been harvested or crafted.
 type _resource uint16
 
@@ -372,7 +376,7 @@ func Resource(Type ResourceType) _resource {
 }
 
 func Resource_Logs(Tree TreeType) _resource {
-	return _resource(uint16(_landResource_Woods) | (uint16(Tree) << 8))
+	return _resource(uint16(_resource_Logs) | (uint16(Tree) << 8))
 }
 
 func (resource _resource) Type() ResourceType {
@@ -526,6 +530,10 @@ func (resource _resource) ToString() string {
 	default:
 		return "Unknown Resource"
 	}
+}
+
+func (resource _resource) IsTreeType() bool {
+	return resource.Type() == _resource_Logs
 }
 
 // Note: Some foods when eaten raw can give food poisoning

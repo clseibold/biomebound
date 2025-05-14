@@ -26,8 +26,9 @@ type Colony struct {
 	buildings []Building
 
 	// Production and consumption for current tick, the whole integer committed to storage at the start of the next tick.
-	currentProduction  [Resource_Max]float64
-	currentConsumption [Resource_Max]float64
+	currentProduction     [Resource_Max]float64
+	currentConsumption    [Resource_Max]float64
+	currentTickProduction [Resource_Max]float64
 
 	// resourceConsumers [Resource_Max]*Node
 	// landResourceProducers [LandResource_Max]*Node
@@ -127,16 +128,30 @@ func NewColony(context *Context, id ColonyId, name string, initialPopulationSize
 	}
 
 	// Basic forest size calculations
-	denseForestTreeSpace := 6                    // square meters, in a dense forest
-	trunkArea := 3                               // square meters
-	treeArea := trunkArea + denseForestTreeSpace // square meters
-	smallForestArea := 50000                     // square meters
-	numberOfTrees := smallForestArea / treeArea
-	colony.landResources[0] = NewResourceZone(0, LandResource_Woods(TreeType_Oak), uint(numberOfTrees))
-	colony.landResources[1] = NewResourceZone(1, LandResource(LandResource_Granite), 20000)
-	colony.landResources[2] = NewResourceZone(2, LandResource(LandResource_Berries), 40000)
+	// denseForestTreeSpace := 6                    // square meters, in a dense forest
+	// trunkArea := 3                               // square meters
+	// treeArea := trunkArea + denseForestTreeSpace // square meters
+	// smallForestArea := 50000                     // square meters
+	// numberOfTrees := smallForestArea / treeArea
+
+	// colony.landResources[0] = NewResourceZone(0, LandResource_Woods(TreeType_Oak), uint(numberOfTrees))
+	colony.landResources[0] = NewResourceZone(0, LandResource(LandResource_Berries), 40000)
+	currentI := 1
+	for i, treeTypePop := range tile.treeTypes {
+		if i >= 9-1 {
+			break
+		}
+
+		colony.landResources[1+i] = NewResourceZone(ResourceZoneId(1+i), LandResource_Woods(treeTypePop.treeType), uint(treeTypePop.count))
+		currentI++
+	}
 	if tile.hasCoal {
-		colony.landResources[3] = NewResourceZone(2, LandResource(LandResource_Coal), 40000)
+		colony.landResources[currentI] = NewResourceZone(ResourceZoneId(currentI), LandResource(LandResource_Coal), 40000)
+		currentI++
+	}
+	if tile.hasGranite {
+		colony.landResources[currentI] = NewResourceZone(ResourceZoneId(currentI), LandResource(LandResource_Granite), 20000)
+		currentI++
 	}
 
 	return colony
@@ -169,7 +184,12 @@ func (colony *Colony) Tick() {
 		}
 	}
 
-	// Design TODO: The current tick's consumption always takes from storage and never from the current tick's production?
+	// Design TODO: The current tick's consumption always takes from storage and never from the current tick's production.
+
+	// Reset current tick production
+	for i := range colony.currentTickProduction {
+		colony.currentTickProduction[i] = 0
+	}
 
 	// Go through all resource zones (and their buildings/technologies) to set next tick's initial resource production and consumption numbers
 	for i := range colony.landResources {
@@ -178,18 +198,16 @@ func (colony *Colony) Tick() {
 			continue
 		}
 
-		// Remove the whole integer but keep the fractional parts in the consumption and production.
-		colony.currentProduction[zone.landResource.ToResource()] = colony.currentProduction[zone.landResource.ToResource()] - float64(uint(colony.currentProduction[zone.landResource.ToResource()]))
-		colony.currentConsumption[zone.landResource.ToResource()] = colony.currentConsumption[zone.landResource.ToResource()] - float64(uint(colony.currentConsumption[zone.landResource.ToResource()]))
-
 		// Add to the fractional parts this tick's production and consumption values.
 		// This might make the production go over 1, which is a good thing, because the commit on next tick
 		// will have a chance to see the whole integer and commit it to storage and resource zones before
 		// the whole integer part is removed.
-		var productionFromZone float64 = colony.productionFromZone(zone)
-
-		colony.currentProduction[zone.landResource.ToResource()] += productionFromZone
-		colony.currentConsumption[zone.landResource.ToResource()] = 0
+		resource := zone.landResource.ToResource()
+		if zone.amount > 0 {
+			productionThisTick := colony.productionFromZone(zone)
+			colony.currentProduction[resource] += productionThisTick
+			colony.currentTickProduction[resource] += productionThisTick
+		}
 	}
 
 	// Design Note TODO:
@@ -204,45 +222,77 @@ func (colony *Colony) Tick() {
 	colony.currentConsumption[Resource_Berries] = min(foodConsumption, float64(colony.resourceCounts[Resource_Berries]))
 }
 
+func (colony *Colony) GetCurrentTickProduction(resource _resource) float64 {
+	return colony.currentTickProduction[resource]
+}
+
 // Commits the previous tick's production and consumption to storage at the start of each tick.
 func (colony *Colony) CommitProductionAndConsumption() {
-	// Go through every resource zone and adjust their amount numbers based on what is being produced from each zone (which is not necessarily the same as the resource's production value).
-	// Readjust the production numbers based on the amount (if necessary, but this should already be done in the Tick() function!)
+	// Track production per zone to ensure correct subtraction
+	zoneProduction := make(map[_resource]map[int]uint)
+
+	// First pass: calculate whole number production for each zone
 	for i := range colony.landResources {
 		zone := &colony.landResources[i]
 		if zone.landResource == LandResource(LandResource_Unknown) {
 			continue
 		}
 
-		// TODO: Make sure that multiple zones that produce the same resource aren't all subtracted from, only one of them.
-		productionWhole := uint(colony.currentProduction[zone.landResource.ToResource()])
-		consumptionWhole := uint(colony.currentConsumption[zone.landResource.ToResource()])
-
-		// OUTDATED NOTE: colony.currentProduction is per tick, so it's a fractional. Add it to the current tick's fractional.
-		// The zone will not be subtracted from until the production reaches a whole integer, and only the
-		// whole integer will be subtracted from the zone.
-		// var productionFromZone float64 = colony.currentProduction[zone.landResource.ToResource()] + colony.productionFromZone(zone)
-
-		if productionWhole >= zone.amount {
-			zone.amount = 0
-
-			// Readjust based on overflow amount from production of zone
-			diff := productionWhole - zone.amount
-			colony.currentProduction[zone.landResource.ToResource()] -= float64(diff)
-		} else {
-			zone.amount = zone.amount - (productionWhole - consumptionWhole)
+		resource := zone.landResource.ToResource()
+		if zoneProduction[resource] == nil {
+			zoneProduction[resource] = make(map[int]uint)
 		}
+
+		zoneWholeProduction := uint(colony.currentProduction[zone.landResource.ToResource()])
+
+		// Ensure we don't over-harvest from this specific zone
+		if zoneWholeProduction > zone.amount {
+			zoneWholeProduction = zone.amount
+		}
+
+		zoneProduction[resource][i] = zoneWholeProduction
 	}
 
-	// Now commit the production and consumption to storage
+	// Update zone amounts and commit the production and consumption to storage
 	for resource := range Resource_Max {
-		productionWhole := uint(colony.currentProduction[resource])
+		var totalProduction uint = 0
+
+		// Sum up production from all zones that produce this resource
+		for zoneIndex := range colony.landResources {
+			if productions, exists := zoneProduction[resource]; exists {
+				if zoneAmount, hasZone := productions[zoneIndex]; hasZone {
+					totalProduction += zoneAmount
+				}
+			}
+		}
+
+		// Handle consumption
 		consumptionWhole := uint(colony.currentConsumption[resource])
-		if consumptionWhole >= colony.resourceCounts[resource]+productionWhole {
+
+		// Update Storage
+		if consumptionWhole >= colony.resourceCounts[resource]+totalProduction {
 			colony.resourceCounts[resource] = 0
 		} else {
-			colony.resourceCounts[resource] = uint(int(colony.resourceCounts[resource]) + int(productionWhole) - int(consumptionWhole))
+			colony.resourceCounts[resource] += totalProduction - consumptionWhole
 		}
+
+		// Update individual zone amounts
+		for i := range colony.landResources {
+			if productions, exists := zoneProduction[resource]; exists {
+				if zoneAmount, hasZone := productions[i]; hasZone {
+					// Subtract only this zone's production from its amount
+					if zoneAmount >= colony.landResources[i].amount {
+						colony.landResources[i].amount = 0
+					} else {
+						colony.landResources[i].amount -= zoneAmount
+					}
+				}
+			}
+		}
+
+		// Keep fractional parts for next tick
+		colony.currentProduction[resource] -= float64(totalProduction)
+		colony.currentConsumption[resource] -= float64(consumptionWhole)
 	}
 }
 

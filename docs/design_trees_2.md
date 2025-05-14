@@ -1190,5 +1190,45 @@ This section describes the unique traits, fruiting, wood strength/durability, tr
 * **Size:** 5–10 m tall.
 * **Uses:** Wood not valuable. Often planted ornamentally for flowers. Rustic fences or firewood only.
 
-Each entry is based on botanical and wood-technology sources【50†L180-188】【57†L37-42】【64†L283-286】【69†L1535-1536】【71†L31-38】【73†L65-67】【75†L30-33】【77†L82-89】【81†L60-64】【86†L340-349】【88†L57-60】【92†L37-42】【96†L30-38】【100†L37-42】【102†L95-100】【108†L30-38】【110†L156-158】【114†L155-164】【118†L28-36】【120†L30-37】【122†L51-54】【124†L275-283】【126†L1-3】【133†L264-270】【135†L239-244】【140†L9-14】【145†L37-40】【147†L29-37】【151†L62-64】【152†L0-3】【153†L0-3】【155†L268-276】【157†L80-84】【162†L581-586】【165†L61-64】【168†L85-92】【171†L1-4】【174†L1-4】【176†L64-66】【178†L76-80】 for the attributes listed. (Citation keys correspond to the source listings.)
+Thanks for confirming! I’ll add a section on Balsam Fir with the same structure: unique characteristics, fruit, wood strength and durability, trunk size, and typical wood uses.
 
+I’ll let you know when that section is ready.
+
+
+### 95. Balsam Fir (*Abies balsamea*)
+
+#### Unique Characteristics
+
+&#x20;*Balsam fir branch with flat needles.* The balsam fir is a small-to-medium evergreen conifer native to cool northeastern North America. It has a narrow, pyramidal (spire-like) crown and dark green foliage. Its flat needles are about 15–30 mm long (¾–1¼ in) and are dark green above with two pale bands on the underside. Crushing the needles and twigs releases a strong balsamic (turpentine-like) scent from the resin.
+
+* **Needles/Foliage:** Flat, rigid needles \~15–30 mm long, dark green above with two silvery-white bands below. Needles are spirally arranged but often lie in two rows along the twig. Foliage is aromatic – it gives off a distinctive balsam scent when crushed.
+* **Cones:** Seed cones are upright (cylindrical) and about 1–3 inches (40–80 mm) long. They are purplish when young, maturing to brown in autumn. Mature cones break apart on the tree to release many winged seeds.
+* **Habitat/Range:** Common in boreal and cool temperate forests of eastern and central Canada and the northeastern U.S.. It favors moist, acidic sites – found in swamps, bogs, wet forests and near streams. It is often associated with spruce and hemlock in the understory of northern woods.
+
+&#x20;*Balsam fir bark with resin blisters.* The bark of young balsam fir is smooth and gray, studded with numerous small resinous blisters. These “pitch blisters” contain aromatic oleoresin (Canada balsam) that can be harvested. As the tree ages, the bark becomes brownish, rough and scaly. The resin has a sweet, turpentine-like odor and has been used in varnishes and as an optical adhesive.
+
+#### Fruit (Seeds)
+
+* **Fruit:** Balsam fir does not produce fleshy fruit. It is a conifer and bears upright seed cones instead.
+* **Seeds:** Cones are about 2.5–4 inches long. In autumn they turn brown and disintegrate to release numerous small winged seeds. These seeds are primarily dispersed by wind and are an important food source for wildlife (for example, crossbills and other songbirds eat the seeds). Humans do not eat balsam fir seeds.
+
+#### Strength and Durability of Wood
+
+* **Hardness:** Very soft wood; Janka hardness is about 400 lbf (1780 N), comparable to other firs and spruces.
+* **Strength:** Wood is lightweight and relatively soft. It has low shock resistance (weak at absorbing impacts) but splits easily along the grain. Its bending and crushing strength are moderate – in tests it often approaches the strength of similar spruces.
+* **Durability:** Rated non-durable; balsam fir has very low natural resistance to decay and rot. It is also prone to insect attack and heart-rot fungi. Long-term outdoor use (especially in contact with soil or moisture) is not recommended.
+* **Workability:** Generally easy to work with hand and machine tools. It glues, stains, and finishes well. However, the wood holds nails and screws poorly, so fasteners may back out under stress.
+
+#### Trunk Size (Mature)
+
+* **Height:** Normally 12–20 m (40–65 ft) tall, with exceptional specimens up to \~27 m (89 ft).
+* **Diameter:** Mature trunk diameters are typically about 0.3–0.6 m (1–2 ft), often with a straight taper.
+
+#### Common and Commercial Uses of Wood
+
+* **Construction Lumber:** Balsam fir is commonly used as general-purpose construction lumber and framing. It is often sold as part of the “SPF” (spruce–pine–fir) group for light-frame construction. Its straight, uniform grain and light weight make it useful for studs, rafters, and sheathing. (Because of its low decay resistance, it is typically used indoors or above ground.)
+* **Pulp and Paper:** A major pulpwood species; widely used in the paper and paperboard industry. Its fibers are also used for oriented strand board (OSB) and other engineered-wood panels.
+* **Panels & Crates:** Used in plywood, crate and pallet construction, paneling, and other utility applications where high strength is not required.
+* **Christmas Trees:** (The live tree is a valued product.) Balsam fir is one of the classic Christmas tree species, prized for its symmetrical conical shape, strong fragrance and good needle retention. It is also used in wreaths and other holiday decorations.
+* **Resin Products:** The tree’s aromatic oleoresin (Canada balsam) is harvested from bark blisters. Historically this resin is used in making varnishes, spirit lacquers, and as an optical adhesive for microscope slides and lenses.
+* **Fuelwood:** The wood is not prized as firewood (it burns quickly with little heat), but waste wood and chips are sometimes used for pulpwood or biomass energy.

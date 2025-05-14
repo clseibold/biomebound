@@ -3,7 +3,6 @@ package biomebound
 import (
 	_ "embed"
 	"fmt"
-	"math"
 	"path"
 	"strconv"
 	"strings"
@@ -13,11 +12,14 @@ import (
 	sis "gitlab.com/sis-suite/smallnetinformationservices"
 )
 
-//go:embed design.md
+//go:embed docs/design.md
 var designDocument string
 
-//go:embed about.gmi
+//go:embed docs/about.gmi
 var aboutPage string
+
+//go:embed docs/prologue.gmi
+var prologue string
 
 const TickRealTimeDuration = time.Second
 const InGameSecondsPerTick int = 4 // NOTE: I could get 7 in-game days per real-time day if I switched this to 7 igs per tick.
@@ -224,12 +226,18 @@ func (c *Context) ColonyPage(request *sis.Request) {
 	}
 	request.Gemini(fmt.Sprintf("Map Location: (%d, %d)\n", colony.tileLocation.X, colony.tileLocation.Y))
 	request.Gemini(fmt.Sprintf("Population:   %d (%d unemployed)\n", len(colony.agents), unemployedAgents))
-	request.Gemini(fmt.Sprintf("Food:         %d (%+.2f/workday)\n", colony.resourceCounts[Resource(Resource_Berries)], math.Ceil(colony.currentProduction[Resource(Resource_Berries)]-colony.currentConsumption[Resource(Resource_Berries)])*TicksPerInGameWorkDay)) // TODO: Count *all* food sources
-	request.Gemini(fmt.Sprintf("Water:        %d (+0/workday)\n", colony.resourceCounts[Resource_Water]))
-	request.Gemini(fmt.Sprintf("Oak Logs:     %d (%+.2f/workday | %+.2f)\n", colony.resourceCounts[Resource_Logs(TreeType_Oak)], math.Ceil(colony.currentProduction[Resource_Logs(TreeType_Oak)]-colony.currentConsumption[Resource_Logs(TreeType_Oak)])*TicksPerInGameWorkDay, LandResource_Woods(TreeType_Oak).PerDayProductionPerAgent()/24*10))
-	request.Gemini(fmt.Sprintf("Granite:      %d (%+.2f/workday)\n", colony.resourceCounts[Resource(Resource_Granite)], math.Ceil(colony.currentProduction[Resource(Resource_Granite)]-colony.currentConsumption[Resource(Resource_Granite)])*TicksPerInGameWorkDay))
-	request.Gemini(fmt.Sprintf("Coal:         %d (+0/workday)\n", colony.resourceCounts[Resource(Resource_Coal)]))
-	request.Gemini(fmt.Sprintf("Iron:         %d (+0/workday)\n", colony.resourceCounts[Resource(Resource_Iron)]))
+	request.Gemini(fmt.Sprintf("Food:         %d (%+.2f/workday)\n", colony.resourceCounts[Resource(Resource_Berries)], colony.GetCurrentTickProduction(Resource(Resource_Berries))*TicksPerInGameWorkDay)) // TODO: Count *all* food sources
+	request.Gemini(fmt.Sprintf("Water:        %d (%+.2f/workday)\n", colony.resourceCounts[Resource_Water], colony.GetCurrentTickProduction(Resource(Resource_Water))*TicksPerInGameWorkDay))
+	request.Gemini("\n")
+
+	for _, treeType := range Map[colony.tileLocation.Y][colony.tileLocation.X].treeTypes {
+		logsResource := Resource_Logs(treeType.treeType)
+
+		request.Gemini(fmt.Sprintf("%s:     %d (%+.2f/workday)\n", logsResource.ToString(), colony.resourceCounts[logsResource], colony.GetCurrentTickProduction(logsResource)*TicksPerInGameWorkDay))
+	}
+	request.Gemini(fmt.Sprintf("Granite:      %d (%+.2f/workday)\n", colony.resourceCounts[Resource(Resource_Granite)], colony.GetCurrentTickProduction(Resource(Resource_Granite))*TicksPerInGameWorkDay))
+	request.Gemini(fmt.Sprintf("Coal:         %d (%+.2f/workday)\n", colony.resourceCounts[Resource(Resource_Coal)], colony.GetCurrentTickProduction(Resource(Resource_Coal))*TicksPerInGameWorkDay))
+	request.Gemini(fmt.Sprintf("Iron:         %d (%+.2f/workday)\n", colony.resourceCounts[Resource(Resource_Iron)], colony.GetCurrentTickProduction(Resource(Resource_Iron))*TicksPerInGameWorkDay))
 	// request.Gemini(fmt.Sprintf("Production Factor: %d\n", colony.productionFactor)) // The efficiency of all production in colony
 	// request.Gemini(fmt.Sprintf("Next Update in")) // TODO: Get real-time duration till next building update.
 

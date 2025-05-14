@@ -39,6 +39,11 @@ type TileLocation struct {
 	Y int
 }
 
+type TreePopulation struct {
+	treeType TreeType
+	count    int
+}
+
 // Each tile of the world map represents a 10 square kilometer region.
 type Tile struct {
 	altitude float64
@@ -64,10 +69,11 @@ type Tile struct {
 	hasFloodArea bool // Contains area that seasonally floods
 	hasSaltFlat  bool // Contains a small salt flat or mineral deposit
 
-	hasCoal bool
+	hasCoal    bool
+	hasGranite bool
 
-	// TODO: Permafrost - arctic and subarctic regions that are close to the poles that have a layer of permanently frozen ground that contains soil and organic material. They happen when a region's average annual temperature is 0 Celsius or below for two consecutive years. The very top layer (active layer) of the permafrost melts in summer, but the lower layer remains frozen. It occurs with the following soil types: silty, or clayey soils, which both can retain moisture. Permafrost can occur in various biomes, including tundra, boreal forests, and some mountainous regions. The melting of the active layer in summer can form wetlands, lakes, and other hydrology features during summer.
-	// TODO: The southern pole on earth has an ice sheet layered on top of landmass. They form from the accumulation of snow and ice over time.
+	trees     map[TreeType]int // Number of trees of each type in this tile
+	treeTypes []TreePopulation // Sorted list of tree types by population
 
 	occupied bool // Temporary - make sure no two colonies are in same tile
 }
@@ -160,7 +166,9 @@ func generateWorldMap() {
 
 	generateGameTrails(seed)
 
+	generateTrees(seed)
 	generateCoalTiles(seed)
+	generateGraniteTiles(seed)
 }
 
 func generateMapMountainPeaks(rand *rand.Rand) []Peak {
@@ -3832,6 +3840,161 @@ func GetLatLongDescription(x, y int) string {
 	}
 }*/
 
+func generateTrees(seed int64) {
+	rng := rand.New(rand.NewSource(seed + 6543))
+
+	for y := range MapHeight {
+		for x := range MapWidth {
+			tile := &Map[y][x]
+
+			// Skip water tiles
+			if tile.landType == LandType_Water {
+				continue
+			}
+
+			// Initialize tree map
+			tile.trees = make(map[TreeType]int)
+
+			// Get possible trees for this biome
+			possibleTrees := BiomeTreeTypes[tile.biome]
+			if len(possibleTrees) == 0 {
+				continue
+			}
+
+			// Base chance for having trees varies by land type and climate
+			baseChance := 0.0
+			switch tile.landType {
+			case LandType_Plains:
+				baseChance = 0.3
+			case LandType_Hills:
+				baseChance = 0.6
+			case LandType_Valleys:
+				baseChance = 0.7
+			case LandType_Plateaus:
+				baseChance = 0.4
+			case LandType_Mountains:
+				if tile.altitude < 1.3 {
+					baseChance = 0.2
+				} else {
+					baseChance = 0.05 // Very high mountains rarely have trees
+				}
+			}
+
+			// Climate modifications
+			if tile.climate.avgRain < 0.2 {
+				baseChance *= 0.3 // Very dry areas have few trees
+			} else if tile.climate.avgRain > 0.6 {
+				baseChance *= 1.5 // Wet areas have more trees
+			}
+
+			// Temperature effects
+			if tile.climate.avgTemp < 0.2 {
+				baseChance *= 0.2 // Very cold areas have few trees
+			} else if tile.climate.avgTemp > 0.8 {
+				baseChance *= 0.7 // Very hot areas have somewhat fewer trees
+			}
+
+			// Groves guarantee some trees
+			if tile.hasGrove {
+				baseChance = math.Max(baseChance, 0.8)
+			}
+
+			// Determine if this tile will have trees
+			if rng.Float64() < baseChance {
+				// Calculate base number of trees per square km
+				baseDensity := 0.0
+				switch tile.biome {
+				case Biome_TropicalRainforest:
+					baseDensity = 400 // Dense rainforest
+				case Biome_TemperateDeciduousForest:
+					baseDensity = 300 // Mixed forest
+				case Biome_BorealForest:
+					baseDensity = 200 // Sparser northern forest
+				case Biome_Tundra:
+					baseDensity = 20 // Very sparse trees
+				case Biome_Savanna:
+					baseDensity = 50 // Scattered trees
+				default:
+					baseDensity = 150 // Default moderate density
+				}
+
+				// Adjust density based on conditions
+				if tile.hasGrove {
+					baseDensity *= 1.3
+				}
+				if tile.climate.avgRain < 0.3 {
+					baseDensity *= 0.5
+				}
+				if tile.altitude > 1.0 {
+					baseDensity *= 0.3
+				}
+
+				// Calculate total trees for this 10 sq km tile
+				totalTrees := int(baseDensity * 10)
+
+				// Add some randomness to total
+				totalTrees = int(float64(totalTrees) * (0.8 + rng.Float64()*0.4))
+
+				// Determine number of tree types based on climate
+				numTypes := 1 // Base minimum
+				if tile.climate.avgRain > 0.6 && tile.climate.avgTemp > 0.5 {
+					numTypes = 3 + rng.Intn(2) // 3-4 types in wet, warm areas
+				} else if tile.climate.avgRain > 0.4 {
+					numTypes = 2 + rng.Intn(2) // 2-3 types in moderately wet areas
+				} else {
+					numTypes = 1 + rng.Intn(2) // 1-2 types in drier areas
+				}
+
+				// Cap number of types by available trees
+				if numTypes > len(possibleTrees) {
+					numTypes = len(possibleTrees)
+				}
+
+				// Shuffle possible trees
+				shuffledTrees := make([]TreeType, len(possibleTrees))
+				copy(shuffledTrees, possibleTrees)
+				for i := len(shuffledTrees) - 1; i > 0; i-- {
+					j := rng.Intn(i + 1)
+					shuffledTrees[i], shuffledTrees[j] = shuffledTrees[j], shuffledTrees[i]
+				}
+
+				// Create sorted population list
+				tile.treeTypes = make([]TreePopulation, 0, numTypes)
+
+				// Distribute trees among selected types
+				remainingTrees := totalTrees
+				for i := range numTypes {
+					treeType := shuffledTrees[i]
+					var treeCount int
+
+					if i == numTypes-1 {
+						// Last type gets remaining trees
+						treeCount = remainingTrees
+					} else {
+						// Random share of remaining trees (more for earlier types)
+						share := rng.Float64() * (0.7 - float64(i)*0.2) // Decreasing shares
+						treeCount = int(float64(remainingTrees) * share)
+					}
+
+					if treeCount > 0 {
+						tile.trees[treeType] = treeCount
+						tile.treeTypes = append(tile.treeTypes, TreePopulation{
+							treeType: treeType,
+							count:    treeCount,
+						})
+						remainingTrees -= treeCount
+					}
+				}
+
+				// Sort tree types by population (most numerous first)
+				sort.Slice(tile.treeTypes, func(i, j int) bool {
+					return tile.treeTypes[i].count > tile.treeTypes[j].count
+				})
+			}
+		}
+	}
+}
+
 func generateCoalTiles(seed int64) {
 	// Create a Perlin noise generator for coal deposits
 	coalNoise := perlin.NewPerlin(2.0, 2.0, 3, seed)
@@ -3887,7 +4050,7 @@ func generateCoalTiles(seed int64) {
 				for dx := -2; dx <= 2; dx++ {
 					nx, ny := x+dx, y+dy
 					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
-						if Map[ny][nx].altitude <= 0 { // Water tile
+						if Map[ny][nx].altitude <= 0 || Map[ny][nx].landType == LandType_Water { // Water tile
 							// Closer water has more influence
 							dist := math.Sqrt(float64(dx*dx + dy*dy))
 							if dist <= 2.0 {
@@ -3905,6 +4068,124 @@ func generateCoalTiles(seed int64) {
 			// Determine if coal is present
 			if coalChance > 0.5 {
 				tile.hasCoal = true
+			}
+		}
+	}
+}
+
+func generateGraniteTiles(seed int64) {
+	// Create a Perlin noise generator for granite deposits
+	graniteNoise := perlin.NewPerlin(2.5, 2.0, 3, seed+1234)
+
+	for y := range MapHeight {
+		for x := range MapWidth {
+			tile := &Map[y][x]
+
+			// Skip water tiles
+			if tile.landType == LandType_Water {
+				continue
+			}
+
+			// Get base noise value for this location
+			noiseValue := (graniteNoise.Noise2D(float64(x)/(MapWidth*0.15), float64(y)/(MapHeight*0.15)) + 1) / 2
+
+			// Calculate suitability based on terrain and geological factors
+			suitability := 0.0
+
+			// Terrain suitability - granite is often exposed in mountains and hills
+			switch tile.landType {
+			case LandType_Mountains:
+				suitability = 0.8 // Most common in mountains
+			case LandType_Hills:
+				suitability = 0.6 // Common in hills
+			case LandType_Plateaus:
+				suitability = 0.5 // Moderate chance in plateaus
+			case LandType_Plains:
+				suitability = 0.2 // Less common in plains
+			case LandType_Valleys:
+				suitability = 0.3 // Can be exposed in valley walls
+			}
+
+			// Altitude influence - granite is more likely to be exposed at higher elevations
+			if tile.altitude > 0.8 {
+				suitability += 0.2
+			} else if tile.altitude > 0.6 {
+				suitability += 0.1
+			}
+
+			// Rock outcroppings often indicate exposed bedrock
+			if tile.hasRocks {
+				suitability += 0.2
+			}
+
+			// Erosion factors - areas with high rainfall variation are more likely
+			// to have exposed granite through erosion
+			rainRange := math.Abs(tile.climate.summerRain - tile.climate.winterRain)
+			if rainRange > 0.4 {
+				suitability += 0.1
+			}
+
+			// Temperature variation can contribute to physical weathering
+			tempRange := math.Abs(tile.climate.summerTemp - tile.climate.winterTemp)
+			if tempRange > 0.5 {
+				suitability += 0.1
+			}
+
+			// Areas near mountains are more likely to have granite
+			// (geological uplift and exposure)
+			nearMountains := false
+			for dy := -3; dy <= 3; dy++ {
+				for dx := -3; dx <= 3; dx++ {
+					nx, ny := x+dx, y+dy
+					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
+						if Map[ny][nx].landType == LandType_Mountains {
+							nearMountains = true
+							break
+						}
+					}
+				}
+				if nearMountains {
+					break
+				}
+			}
+			if nearMountains {
+				suitability += 0.2
+			}
+
+			// Water proximity affects granite exposure
+			// Too close to water increases weathering, but moderate distance
+			// can indicate erosion that exposes granite
+			waterEffect := 0.0
+			for dy := -4; dy <= 4; dy++ {
+				for dx := -4; dx <= 4; dx++ {
+					nx, ny := x+dx, y+dy
+					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
+						if Map[ny][nx].altitude <= 0 || Map[ny][nx].landType == LandType_Water { // Water tile
+							dist := math.Sqrt(float64(dx*dx + dy*dy))
+							if dist <= 1.0 {
+								// Very close to water - increased weathering
+								waterEffect -= 0.3
+							} else if dist <= 3.0 {
+								// Moderate distance - erosion exposes granite
+								waterEffect += 0.2 * (1.0 - dist/3.0)
+							}
+						}
+					}
+				}
+			}
+			// Cap water effect
+			waterEffect = math.Max(-0.3, math.Min(0.2, waterEffect))
+			suitability += waterEffect
+
+			// Scale suitability by noise value for natural-looking deposits
+			graniteChance := suitability * noiseValue
+
+			// Cap the maximum chance
+			graniteChance = math.Min(graniteChance, 0.9)
+
+			// Determine if granite is present
+			if graniteChance > 0.45 {
+				tile.hasGranite = true
 			}
 		}
 	}

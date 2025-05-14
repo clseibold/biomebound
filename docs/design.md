@@ -2,7 +2,6 @@
 
 * Genre: Survival Strategy Colony-management Simulation.
 * Game loop uses 1-second ticks, and all simulations are based on their number of ticks.
-  * Simulations can be sped-up by decreasing the tick duration.
 * When first starting, should be able to do a lot that will affect later game in different ways. But after the first few real-time days, the time it takes to do stuff should lengthen a little bit until it becomes consistent. This allows new players to have something to do when just starting out. The further along a player is, the more things they will be managing in general, so longer wait times won't matter nearly as much. Additionally, the cycle times of each production should be staggered.
 * 1 real-time day = ~4 in-game days (igd)
 * 1 tile on world map is 10 square kilometers
@@ -92,6 +91,8 @@ Before you can trade with others, you must have the following:
 * Trade routes that pass by your colony and theirs
 * Designated merchant workers
 * A merchant outpost building?
+
+Before you can trade with others, you must build a trade route to their colony. After construction, the game internally will use an A* search algorithm to find the best path from your colony to theirs based on the climate, land type, and biome of each tile along the path to simulate how trade routes would be made in real life.
 
 ## Guided Tutorial and Wiki
 

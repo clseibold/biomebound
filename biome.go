@@ -7,6 +7,9 @@ import "math"
 // Ocean/Lake tiles are also extremely low compared to earth.
 // TODO: Why don't I have Jungle biomes?!?
 
+// NOTE: Biomes with Permafrost - arctic and subarctic regions that are close to the poles that have a layer of permanently frozen ground that contains soil and organic material. They happen when a region's average annual temperature is 0 Celsius or below for two consecutive years. The very top layer (active layer) of the permafrost melts in summer, but the lower layer remains frozen. It occurs with the following soil types: silty, or clayey soils, which both can retain moisture. Permafrost can occur in various biomes, including tundra, boreal forests, and some mountainous regions. The melting of the active layer in summer can form wetlands, lakes, and other hydrology features during summer.
+// TODO: The southern pole on earth has an ice sheet layered on top of landmass. They form from the accumulation of snow and ice over time.
+
 type Biome uint8
 
 const (
@@ -820,4 +823,253 @@ func smoothBiomes() {
 			}
 		}
 	}
+}
+
+// BiomeTreeTypes maps each biome to the tree types that can exist within it
+var BiomeTreeTypes = [Biome_Max][]TreeType{
+	// Warm Biomes
+	Biome_TropicalRainforest: {
+		TreeType_Mahogany,
+		TreeType_Kapok_Tree,
+		TreeType_Brazil_Nut_Tree,
+		TreeType_Rubber_Tree,
+		TreeType_Strangler_Fig,
+	},
+
+	Biome_TropicalSeasonalForest: {
+		TreeType_Teak,
+		TreeType_Sal_Tree,
+		TreeType_Indian_Rosewood,
+		TreeType_Flame_Tree,
+		TreeType_Tamarind,
+	},
+
+	Biome_TropicalMontaneForest: {
+		TreeType_Podocarpus_Trees,
+		TreeType_Alder,
+		TreeType_Tree_Ferns,
+		TreeType_Magnolia,
+		TreeType_Bamboo,
+	},
+
+	Biome_TropicalMoistForest: {
+		TreeType_Ironwood,
+		TreeType_Ebony,
+		TreeType_Meranti,
+		TreeType_Rosewood,
+		TreeType_Nutmeg_Tree,
+	},
+
+	Biome_TropicalEvergreenForest: {
+		TreeType_Mango_Tree,
+		TreeType_Banyan_Tree,
+		TreeType_Jackfruit_Tree,
+		TreeType_Sandalwood,
+		TreeType_Dipterocarp_Trees,
+	},
+
+	Biome_Savanna: {
+		TreeType_Acacia,
+		TreeType_Baobab,
+		TreeType_Marula_Tree,
+		TreeType_Sausage_Tree,
+		TreeType_Terminalia,
+	},
+
+	Biome_TropicalSwampForest: {
+		TreeType_Mangrove_Palm,
+		TreeType_Water_Tupelo,
+		TreeType_Swamp_Mahogany,
+		TreeType_Pond_Cypress,
+		TreeType_Melaleuca,
+	},
+
+	Biome_TropicalSwamp: {
+		TreeType_Rattan_Palm,
+		TreeType_Screw_Pine,
+		TreeType_Water_Hickory,
+		TreeType_Oil_Palm,
+	},
+
+	Biome_Mangrove: {
+		TreeType_Red_Mangrove,
+		TreeType_Black_Mangrove,
+		TreeType_White_Mangrove,
+		TreeType_Buttonwood,
+		TreeType_Sea_Hibiscus,
+	},
+
+	// Temperate Biomes
+	Biome_TemperateDeciduousForest: {
+		TreeType_Oak,
+		TreeType_Maple,
+		TreeType_Beech,
+		TreeType_Birch,
+		TreeType_Hickory,
+	},
+
+	Biome_TemperateMixedForest: {
+		TreeType_Eastern_Hemlock,
+		TreeType_Douglas_Fir,
+		TreeType_Red_Maple,
+		TreeType_White_Pine,
+		TreeType_Chestnut,
+	},
+
+	Biome_TemperateRainforest: {
+		TreeType_Sitka_Spruce,
+		TreeType_Western_Red_Cedar,
+		TreeType_Bigleaf_Maple,
+		TreeType_Coast_Redwood,
+		TreeType_Yellow_Cedar,
+	},
+
+	Biome_TemperateConiferousForest: {
+		TreeType_Scots_Pine,
+		TreeType_Norway_Spruce,
+		TreeType_Douglas_Fir,
+		TreeType_Lodgepole_Pine,
+	},
+
+	Biome_TemperateSwamp: {
+		TreeType_Bald_Cypress,
+		TreeType_Black_Gum,
+		TreeType_Red_Maple,
+		TreeType_Sweetbay_Magnolia,
+		TreeType_Willow,
+	},
+
+	Biome_CypressSwamp: {
+		TreeType_Bald_Cypress,
+		TreeType_Pond_Cypress,
+		TreeType_Water_Tupelo,
+		TreeType_Oak,
+		TreeType_Gumbo_Limbo,
+	},
+
+	Biome_MangroveSwamp: {
+		TreeType_Red_Mangrove,
+		TreeType_Black_Mangrove,
+		TreeType_White_Mangrove,
+		TreeType_Buttonwood,
+		TreeType_Sea_Hibiscus,
+	},
+
+	Biome_Pampas: {
+		TreeType_Ombú_Tree,
+		TreeType_Willow,
+		TreeType_Oak,
+	},
+
+	Biome_Veld: {
+		TreeType_Acacia,
+		TreeType_Marula_Tree,
+		TreeType_Wild_Olive,
+		TreeType_Oak,
+	},
+
+	Biome_Prairie: {
+		TreeType_Cottonwood,
+		TreeType_American_Elm,
+		TreeType_Box_Elder,
+		TreeType_Oak,
+	},
+
+	Biome_TemperateFen: {
+		TreeType_Tamarack,
+		TreeType_Black_Spruce,
+		TreeType_Alder,
+		TreeType_Red_Cedar,
+		TreeType_Willow,
+	},
+
+	// Cold Biomes
+	Biome_BorealForest: {
+		TreeType_Black_Spruce,
+		TreeType_Scots_Pine,
+		TreeType_Tamarack,
+		TreeType_Balsam_Fir,
+	},
+
+	Biome_Alpine: {
+		TreeType_Krummholz_Pines,
+		TreeType_Mountain_Hemlock,
+		TreeType_Juniper,
+		TreeType_Dwarf_Willow,
+		TreeType_Bristlecone_Pine,
+	},
+
+	Biome_Tundra: {
+		TreeType_Dwarf_Birch,
+		TreeType_Arctic_Willow,
+		TreeType_Alder,
+	},
+
+	Biome_Steppe: {
+		TreeType_Siberian_Elm,
+		TreeType_Scots_Pine,
+	},
+
+	Biome_ColdBog: {
+		TreeType_Tamarack,
+		TreeType_Black_Spruce,
+		TreeType_Alder,
+		TreeType_Willow,
+	},
+
+	Biome_ColdFen: {
+		TreeType_Tamarack,
+		TreeType_Black_Spruce,
+		TreeType_Alder,
+	},
+
+	// Semi-Arid Biomes
+	Biome_SagebrushSteppe: {
+		TreeType_Juniper,
+		TreeType_Pinyon_Pine,
+	},
+
+	Biome_Matorral: {
+		TreeType_Olive_Trees,
+		TreeType_Oak,
+		TreeType_Carob_Tree,
+	},
+
+	// Hot Biomes
+	Biome_MediterraneanShrubland: {
+		TreeType_Olive_Trees,
+		TreeType_Oak,
+		TreeType_Aleppo_Pine,
+	},
+
+	Biome_Fynbos: {
+		TreeType_Protea_Trees,
+		TreeType_Silver_Tree,
+	},
+
+	Biome_DesertShrubland: {
+		TreeType_Mesquite,
+		TreeType_Palo_Verde,
+		TreeType_Acacia,
+	},
+
+	Biome_HotDesert: {
+		TreeType_Date_Palm,
+		TreeType_Tamarisk,
+		TreeType_Desert_Willow,
+	},
+
+	// Water Biomes (these typically don't have trees, so empty arrays)
+	Biome_Ocean: {},
+	Biome_Lake: {
+		TreeType_Willow,
+		TreeType_Cottonwood,
+		TreeType_Alder,
+	},
+
+	Biome_River: {
+		TreeType_Willow,
+		TreeType_Cottonwood,
+		TreeType_Alder,
+	},
 }
