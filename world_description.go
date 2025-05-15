@@ -68,7 +68,7 @@ func getLandTypeDescription(tile *Tile) string {
 			return "The landscape is dominated by gently rolling hills that create a patchwork of slopes and valleys."
 		}
 	case LandType_Valleys:
-		if tile.hasFloodArea {
+		if tile.features.Test(TileFeature_HasFloodArea) {
 			return "You're in a broad river valley with rich alluvial soil deposited by seasonal floods."
 		} else {
 			return "This sheltered valley is nestled between higher terrain, protected from harsh winds."
@@ -197,23 +197,23 @@ func getFeatureDescription(tile *Tile) string {
 	features := make([]string, 0)
 
 	// Water features
-	if tile.hasStream {
+	if tile.features.Test(TileFeature_HasStream) {
 		features = append(features, "A small stream cuts through the area, its clear water flowing over smooth stones")
 	}
-	if tile.hasPond {
+	if tile.features.Test(TileFeature_HasPond) {
 		features = append(features, "A tranquil pond reflects the sky, its edges ringed with characteristic vegetation")
 	}
-	if tile.hasSpring {
+	if tile.features.Test(TileFeature_HasSpring) {
 		features = append(features, "A natural spring bubbles up from underground, creating a small oasis of fresh water")
 	}
-	if tile.hasMarsh && !tile.hasPond {
+	if tile.features.Test(TileFeature_HasMarsh) && !tile.features.Test(TileFeature_HasPond) {
 		features = append(features, "Soggy marsh ground squelches underfoot, supporting specialized water-tolerant plants")
-	} else if tile.hasMarsh && tile.hasPond {
+	} else if tile.features.Test(TileFeature_HasMarsh) && tile.features.Test(TileFeature_HasPond) {
 		features = append(features, "The margins of the pond transition into a marshy area with reeds and sedges")
 	}
 
 	// Plains features
-	if tile.hasGrove {
+	if tile.features.Test(TileFeature_HasGrove) {
 		if tile.isDesert {
 			features = append(features, "A small grove of drought-resistant trees provides rare shade in this arid landscape")
 		} else if tile.biome == Biome_Savanna {
@@ -222,30 +222,30 @@ func getFeatureDescription(tile *Tile) string {
 			features = append(features, "A pleasant grove of trees creates a shaded microhabitat")
 		}
 	}
-	if tile.hasMeadow {
+	if tile.features.Test(TileFeature_HasMeadow) {
 		if tile.isDesert {
 			features = append(features, "A small patch of wildflowers has bloomed following recent rains")
 		} else {
 			features = append(features, "A colorful meadow of wildflowers attracts numerous pollinators")
 		}
 	}
-	if tile.hasScrub {
+	if tile.features.Test(TileFeature_HasScrub) {
 		if tile.isDesert {
 			features = append(features, "Scattered drought-resistant shrubs dot the landscape")
 		} else {
 			features = append(features, "Hardy scrub vegetation covers portions of the ground")
 		}
 	}
-	if tile.hasRocks {
+	if tile.features.Test(TileFeature_HasRocks) {
 		features = append(features, "Weathered rock outcroppings break through the surface, providing habitat for specialized species")
 	}
-	if tile.hasGameTrail {
+	if tile.features.Test(TileFeature_HasGameTrail) {
 		features = append(features, "Well-worn animal trails crisscross the area, revealing the movements of local wildlife")
 	}
-	if tile.hasFloodArea {
+	if tile.features.Test(TileFeature_HasFloodArea) {
 		features = append(features, "Evidence of seasonal flooding is visible in the terrain and vegetation patterns")
 	}
-	if tile.hasSaltFlat {
+	if tile.features.Test(TileFeature_HasSaltFlat) {
 		features = append(features, "A crusty salt flat indicates high evaporation and mineral accumulation")
 	}
 

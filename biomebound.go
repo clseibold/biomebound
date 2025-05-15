@@ -81,12 +81,16 @@ func (c *Context) SimulationLoop() {
 func (c *Context) Attach(s sis.ServeMux) {
 	s.AddRoute("/", c.Homepage)
 	s.AddRoute("/about/", c.About)
+	s.AddRoute("/prologue/", func(request *sis.Request) {
+		request.Gemini(prologue)
+	})
 	s.AddRoute("/design/", c.DesignDocument)
 	s.AddRoute("/world-map/", PrintWorldMap)
 	s.AddRoute("/explore/", c.ExploreWorld)
 
 	group := s.Group("/:colony/")
 	group.AddRoute("/", c.ColonyPage)
+	group.AddRoute("/build/", c.BuildPage)
 	group.AddRoute("/resource_zone/:id/", c.ResourceZonePage)
 	group.AddRoute("/resource_zone/:id/add_worker", c.AddWorkerPage)
 	group.AddRoute("/resource_zone/:id/remove_worker", c.RemoveWorkerPage)
@@ -276,6 +280,43 @@ func (c *Context) ColonyPage(request *sis.Request) {
 	// Action Links
 }
 
+func (c *Context) BuildPage(request *sis.Request) {
+	colonyStr := request.GetParam("colony")
+	colonyId, _ := strconv.Atoi(colonyStr)
+	colony := c.colonies[ColonyId(colonyId)]
+
+	query, _ := request.Query()
+	if query != "" {
+		c.BuildQuery(request, query, colony)
+	}
+
+	request.Heading(1, "Build")
+	request.Gemini("\n")
+
+	request.Heading(2, "Shelter")
+	if len(colony.GetTile().treeTypes) > 0 { // Trees for sticks and leaves
+		request.Link("/build/?leaf_shelter", "Leaf Shelter")
+		request.Link("/build/?stick_lean_to", "Stick Lean-To")
+		request.Link("/build/?tipi", "Tipi")
+	} else {
+		// TODO: Plains, Snow areas, mountains, and deserts
+	}
+
+	request.Link("/build/hut", "Hut")
+	request.Link("/build/cottage", "Cottage")
+}
+
+func (c *Context) BuildQuery(request *sis.Request, query string, colony *Colony) {
+	switch query {
+	case "leaf_shelter":
+
+	case "stick_lean_to":
+	case "tipi":
+	case "hut":
+	case "cottage":
+	}
+}
+
 func (c *Context) ResourceZonePage(request *sis.Request) {
 	colonyStr := request.GetParam("colony")
 	colonyId, _ := strconv.Atoi(colonyStr)
@@ -306,15 +347,15 @@ func (c *Context) AddWorkerPage(request *sis.Request) {
 	colonyId, _ := strconv.Atoi(colonyStr)
 	colony := c.colonies[ColonyId(colonyId)]
 
-	resourceId, _ := strconv.Atoi(request.GetParam("id"))
-	zone := &colony.landResources[resourceId]
+	resourceZoneId, _ := strconv.Atoi(request.GetParam("id"))
+	zone := ResourceZoneId(resourceZoneId)
 
 	// Pick a (random) unemployed worker to add to the zone, if one is available
 	for id := range colony.agents {
 		a := &colony.agents[id]
 
 		if a.assignedZone == -1 {
-			zone.AddWorker(AgentId(id), a)
+			zone.AddWorker(colony, AgentId(id), a)
 			break
 		}
 	}
@@ -328,8 +369,8 @@ func (c *Context) RemoveWorkerPage(request *sis.Request) {
 	colonyId, _ := strconv.Atoi(colonyStr)
 	colony := c.colonies[ColonyId(colonyId)]
 
-	resourceId, _ := strconv.Atoi(request.GetParam("id"))
-	zone := &colony.landResources[resourceId]
+	resourceZoneId, _ := strconv.Atoi(request.GetParam("id"))
+	zone := ResourceZoneId(resourceZoneId)
 	zone.RemoveLastWorker(colony)
 
 	request.Redirect("/resource_zone/%s/", request.GetParam("id"))

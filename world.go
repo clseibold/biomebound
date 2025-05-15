@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/aquilax/go-perlin"
+	"gitlab.com/clseibold/biomebound/bitset"
 )
 
 // | Terrain Type | Altitude Range | Display |
@@ -44,6 +45,25 @@ type TreePopulation struct {
 	count    int
 }
 
+type TileFeatures uint16
+
+const (
+	// Water Features
+	TileFeature_HasStream TileFeatures = iota // Contains a small stream/creek within the tile
+	TileFeature_HasPond                       // Contains a small pond within the tile
+	TileFeature_HasSpring                     // Contains a natural spring (water source)
+	TileFeature_HasMarsh                      // Contains a marshy area (soggy ground)
+
+	// Plains Features
+	TileFeature_HasGrove     // Contains a small grove of trees
+	TileFeature_HasMeadow    // Contains a flower-rich meadow
+	TileFeature_HasScrub     // Contains scrubland with brush
+	TileFeature_HasRocks     // Contains small rock outcroppings
+	TileFeature_HasGameTrail // Contains animal paths/trails
+	TileFeature_HasFloodArea // Contains area that seasonally floods
+	TileFeature_HasSaltFlat  // Contains a small salt flat or mineral deposit
+)
+
 // Each tile of the world map represents a 10 square kilometer region.
 type Tile struct {
 	altitude float64
@@ -54,20 +74,22 @@ type Tile struct {
 	// Climate factors (0.0 to 1.0 scale)
 	climate Climate
 
+	features bitset.BitSet[TileFeatures, TileFeatures]
+
 	// Water features
-	hasStream bool // Contains a small stream/creek within the tile
-	hasPond   bool // Contains a small pond within the tile
-	hasSpring bool // Contains a natural spring (water source)
-	hasMarsh  bool // Contains a marshy area (soggy ground)
+	// hasStream bool // Contains a small stream/creek within the tile
+	// hasPond   bool // Contains a small pond within the tile
+	// hasSpring bool // Contains a natural spring (water source)
+	// hasMarsh  bool // Contains a marshy area (soggy ground)
 
 	// Plains features
-	hasGrove     bool // Contains a small grove of trees
-	hasMeadow    bool // Contains a flower-rich meadow
-	hasScrub     bool // Contains scrubland with brush
-	hasRocks     bool // Contains small rock outcroppings
-	hasGameTrail bool // Contains animal paths/trails
-	hasFloodArea bool // Contains area that seasonally floods
-	hasSaltFlat  bool // Contains a small salt flat or mineral deposit
+	// hasGrove     bool // Contains a small grove of trees
+	// hasMeadow    bool // Contains a flower-rich meadow
+	// hasScrub     bool // Contains scrubland with brush
+	// hasRocks     bool // Contains small rock outcroppings
+	// hasGameTrail bool // Contains animal paths/trails
+	// hasFloodArea bool // Contains area that seasonally floods
+	// hasSaltFlat  bool // Contains a small salt flat or mineral deposit
 
 	hasCoal    bool
 	hasGranite bool
@@ -1292,7 +1314,7 @@ func generateSmallWaterFeatures(seed int64) {
 
 		if isGoodSpringLocation {
 			// Set the spring flag
-			Map[y][x].hasSpring = true
+			Map[y][x].features.Set(TileFeature_HasSpring)
 
 			// Mark as placed to avoid overlaps
 			waterFeaturePlaced[y][x] = true
@@ -1431,7 +1453,7 @@ func generateSmallWaterFeatures(seed int64) {
 				for dx := -2; dx <= 2; dx++ {
 					nx, ny := x+dx, y+dy
 					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
-						if Map[ny][nx].hasSpring {
+						if Map[ny][nx].features.Test(TileFeature_HasSpring) {
 							nearSpring = true
 							break
 						}
@@ -1450,7 +1472,7 @@ func generateSmallWaterFeatures(seed int64) {
 
 		if isGoodMarshLocation {
 			// Set the marsh flag
-			Map[y][x].hasMarsh = true
+			Map[y][x].features.Set(TileFeature_HasMarsh)
 
 			// Mark as placed to avoid overlaps
 			waterFeaturePlaced[y][x] = true
@@ -1492,7 +1514,7 @@ func generateSmallWaterFeatures(seed int64) {
 							Map[ny][nx].landType != LandType_Plateaus {
 
 							// Place a pond here
-							Map[ny][nx].hasPond = true
+							Map[ny][nx].features.Set(TileFeature_HasPond)
 							waterFeaturePlaced[ny][nx] = true
 							pondPlaced = true
 							pondsGenerated++
@@ -1550,7 +1572,7 @@ func generateSmallWaterFeatures(seed int64) {
 				for dx := -2; dx <= 2; dx++ {
 					nx, ny := x+dx, y+dy
 					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
-						if Map[ny][nx].hasMarsh {
+						if Map[ny][nx].features.Test(TileFeature_HasMarsh) {
 							nearMarsh = true
 							break
 						}
@@ -1575,7 +1597,7 @@ func generateSmallWaterFeatures(seed int64) {
 
 			if rng.Float64() < pondChance {
 				// Set the pond flag
-				Map[y][x].hasPond = true
+				Map[y][x].features.Set(TileFeature_HasPond)
 
 				// Mark as placed to avoid overlaps
 				waterFeaturePlaced[y][x] = true
@@ -1620,7 +1642,7 @@ func generateSeasonalStreams(seed int64, springLocations []struct{ x, y int }, w
 		streamChance := 0.5 + avgRain*0.4
 		if rng.Float64() < streamChance {
 			// First, mark the spring tile as having a stream too
-			Map[spring.y][spring.x].hasStream = true
+			Map[spring.y][spring.x].features.Set(TileFeature_HasStream)
 
 			// Trace a path downhill from the spring
 			streamPath := traceSmallStreamPath(spring.x, spring.y, rng, waterFeaturePlaced)
@@ -1637,7 +1659,7 @@ func generateSeasonalStreams(seed int64, springLocations []struct{ x, y int }, w
 					sx, sy := point.x, point.y
 
 					// Set the stream flag
-					Map[sy][sx].hasStream = true
+					Map[sy][sx].features.Set(TileFeature_HasStream)
 
 					// Mark as placed to avoid overlaps
 					waterFeaturePlaced[sy][sx] = true
@@ -1701,7 +1723,7 @@ func generateSeasonalStreams(seed int64, springLocations []struct{ x, y int }, w
 					sx, sy := point.x, point.y
 
 					// Set the stream flag - these will be seasonal
-					Map[sy][sx].hasStream = true
+					Map[sy][sx].features.Set(TileFeature_HasStream)
 
 					// Mark as placed to avoid overlaps
 					waterFeaturePlaced[sy][sx] = true
@@ -1745,7 +1767,7 @@ func traceSmallStreamPath(startX, startY int, rng *rand.Rand, occupied [MapHeigh
 
 				// For streams, we should allow flowing through spring tiles
 				// but not through tiles already occupied by other features
-				if occupied[ny][nx] && !Map[ny][nx].hasSpring {
+				if occupied[ny][nx] && !Map[ny][nx].features.Test(TileFeature_HasStream) {
 					continue
 				}
 
@@ -1807,10 +1829,10 @@ func generatePlainsFeatures(seed int64) {
 		for x := range MapWidth {
 			// Skip tiles that already have features
 			if Map[y][x].altitude <= 0 || // Water
-				Map[y][x].hasStream ||
-				Map[y][x].hasPond ||
-				Map[y][x].hasSpring ||
-				Map[y][x].hasMarsh {
+				Map[y][x].features.Test(TileFeature_HasStream) ||
+				Map[y][x].features.Test(TileFeature_HasPond) ||
+				Map[y][x].features.Test(TileFeature_HasStream) ||
+				Map[y][x].features.Test(TileFeature_HasMarsh) {
 				featurePlaced[y][x] = true
 			}
 		}
@@ -1870,8 +1892,8 @@ func generatePlainsFeatures(seed int64) {
 				for dx := -3; dx <= 3; dx++ {
 					nx, ny := x+dx, y+dy
 					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
-						if Map[ny][nx].altitude <= 0 || Map[ny][nx].hasStream ||
-							Map[ny][nx].hasPond || Map[ny][nx].hasSpring {
+						if Map[ny][nx].altitude <= 0 || Map[ny][nx].features.Test(TileFeature_HasStream) ||
+							Map[ny][nx].features.Test(TileFeature_HasPond) || Map[ny][nx].features.Test(TileFeature_HasSpring) {
 							nearWater = true
 							break
 						}
@@ -1890,7 +1912,7 @@ func generatePlainsFeatures(seed int64) {
 			groveChance = math.Min(groveChance, 0.9)
 
 			if rng.Float64() < groveChance {
-				Map[y][x].hasGrove = true
+				Map[y][x].features.Test(TileFeature_HasGrove)
 				featurePlaced[y][x] = true
 
 				// Some groves form small clusters - larger in fertile areas
@@ -1913,7 +1935,7 @@ func generatePlainsFeatures(seed int64) {
 					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight &&
 						!featurePlaced[ny][nx] &&
 						Map[ny][nx].landType == LandType_Plains {
-						Map[ny][nx].hasGrove = true
+						Map[ny][nx].features.Set(TileFeature_HasGrove)
 						featurePlaced[ny][nx] = true
 					}
 				}
@@ -1972,8 +1994,8 @@ func generatePlainsFeatures(seed int64) {
 				for dx := -3; dx <= 3; dx++ {
 					nx, ny := x+dx, y+dy
 					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight {
-						if Map[ny][nx].altitude <= 0 || Map[ny][nx].hasStream ||
-							Map[ny][nx].hasPond || Map[ny][nx].hasSpring {
+						if Map[ny][nx].altitude <= 0 || Map[ny][nx].features.Test(TileFeature_HasStream) ||
+							Map[ny][nx].features.Test(TileFeature_HasPond) || Map[ny][nx].features.Test(TileFeature_HasSpring) {
 							nearWater = true
 							break
 						}
@@ -1992,7 +2014,7 @@ func generatePlainsFeatures(seed int64) {
 			meadowChance = math.Min(meadowChance, 0.9)
 
 			if rng.Float64() < meadowChance {
-				Map[y][x].hasMeadow = true
+				Map[y][x].features.Set(TileFeature_HasMeadow)
 				featurePlaced[y][x] = true
 				meadowsGenerated++
 			}
@@ -2043,7 +2065,7 @@ func generatePlainsFeatures(seed int64) {
 			scrubChance = math.Min(scrubChance, 0.9)
 
 			if rng.Float64() < scrubChance {
-				Map[y][x].hasScrub = true
+				Map[y][x].features.Set(TileFeature_HasScrub)
 				featurePlaced[y][x] = true
 
 				// Scrubland often forms larger patches
@@ -2067,7 +2089,7 @@ func generatePlainsFeatures(seed int64) {
 					if nx >= 0 && nx < MapWidth && ny >= 0 && ny < MapHeight &&
 						!featurePlaced[ny][nx] &&
 						Map[ny][nx].landType == LandType_Plains {
-						Map[ny][nx].hasScrub = true
+						Map[ny][nx].features.Set(TileFeature_HasScrub)
 						featurePlaced[ny][nx] = true
 					}
 				}
@@ -2109,7 +2131,7 @@ func generatePlainsFeatures(seed int64) {
 			}
 
 			// Areas with seasonal flooding tend to expose rocks
-			if Map[y][x].hasFloodArea {
+			if Map[y][x].features.Test(TileFeature_HasFloodArea) {
 				rockChance += 0.1
 			}
 
@@ -2117,7 +2139,7 @@ func generatePlainsFeatures(seed int64) {
 			rockChance = math.Min(rockChance, 0.8)
 
 			if rng.Float64() < rockChance {
-				Map[y][x].hasRocks = true
+				Map[y][x].features.Set(TileFeature_HasRocks)
 				featurePlaced[y][x] = true
 				rocksGenerated++
 			}
@@ -2167,7 +2189,7 @@ func generatePlainsFeatures(seed int64) {
 			}
 
 			// Areas with seasonal flooding but high evaporation develop salt flats
-			if Map[y][x].hasFloodArea && summerTemp > 0.7 {
+			if Map[y][x].features.Test(TileFeature_HasFloodArea) && summerTemp > 0.7 {
 				saltFlatChance += 0.3
 			}
 
@@ -2175,7 +2197,7 @@ func generatePlainsFeatures(seed int64) {
 			saltFlatChance = math.Min(saltFlatChance, 0.8)
 
 			if rng.Float64() < saltFlatChance {
-				Map[y][x].hasSaltFlat = true
+				Map[y][x].features.Set(TileFeature_HasSaltFlat)
 				featurePlaced[y][x] = true
 
 				// Salt flats can form small patches
@@ -2192,7 +2214,7 @@ func generatePlainsFeatures(seed int64) {
 							!featurePlaced[ny][nx] &&
 							Map[ny][nx].landType == LandType_Plains &&
 							Map[ny][nx].altitude < 0.4 {
-							Map[ny][nx].hasSaltFlat = true
+							Map[ny][nx].features.Set(TileFeature_HasSaltFlat)
 							featurePlaced[ny][nx] = true
 						}
 					}
@@ -2358,7 +2380,7 @@ func generateFloodAreas(seed int64) {
 		if len(floodTiles) >= 3 {
 			// Apply flood area to the map
 			for _, tile := range floodTiles {
-				Map[tile.y][tile.x].hasFloodArea = true
+				Map[tile.y][tile.x].features.Set(TileFeature_HasFloodArea)
 
 				// Mark a wide radius as checked to avoid too-close flood regions
 				for dy := -4; dy <= 4; dy++ {
@@ -2570,13 +2592,13 @@ func generateGameTrails(seed int64) {
 		for y := range MapHeight {
 			for x := range MapWidth {
 				// Water sources
-				if Map[y][x].altitude <= 0 || Map[y][x].hasPond ||
-					Map[y][x].hasStream || Map[y][x].hasSpring {
+				if Map[y][x].altitude <= 0 || Map[y][x].features.Test(TileFeature_HasPond) ||
+					Map[y][x].features.Test(TileFeature_HasStream) || Map[y][x].features.Test(TileFeature_HasSpring) {
 					waterSources = append(waterSources, struct{ x, y int }{x, y})
 				}
 
 				// Food sources
-				if Map[y][x].hasMeadow || Map[y][x].hasGrove {
+				if Map[y][x].features.Test(TileFeature_HasMeadow) || Map[y][x].features.Test(TileFeature_HasGrove) {
 					foodSources = append(foodSources, struct{ x, y int }{x, y})
 				}
 			}
@@ -2740,7 +2762,7 @@ func generateGameTrails(seed int64) {
 				x, y := point.x, point.y
 
 				// Game trails can go through other features
-				Map[y][x].hasGameTrail = true
+				Map[y][x].features.Set(TileFeature_HasGameTrail)
 			}
 
 			trailsGenerated++
@@ -2790,18 +2812,18 @@ func findGameTrailPath(startX, startY, targetX, targetY int, rng *rand.Rand) []s
 
 		// Modify costs for specific features animals might prefer or avoid
 		// Animals prefer areas with food and water
-		if Map[y][x].hasGrove {
+		if Map[y][x].features.Test(TileFeature_HasGrove) {
 			baseCost *= 0.8 // Animals like cover
 		}
-		if Map[y][x].hasMeadow {
+		if Map[y][x].features.Test(TileFeature_HasMeadow) {
 			baseCost *= 0.7 // Animals like food
 		}
-		if Map[y][x].hasStream || Map[y][x].hasPond || Map[y][x].hasSpring {
+		if Map[y][x].features.Test(TileFeature_HasStream) || Map[y][x].features.Test(TileFeature_HasPond) || Map[y][x].features.Test(TileFeature_HasSpring) {
 			baseCost *= 0.6 // Animals strongly prefer paths near water
 		}
 
 		// Animals avoid certain features
-		if Map[y][x].hasRocks {
+		if Map[y][x].features.Test(TileFeature_HasRocks) {
 			baseCost *= 1.3 // Animals avoid rocky areas
 		}
 		if Map[y][x].isDesert && avgRain < 0.3 {
@@ -3040,110 +3062,110 @@ func generateDeserts(seed int64) {
 
 				// 1. Water features (rarer in more intense deserts)
 				// Streams can be seasonal in deserts
-				if Map[y][x].hasStream {
+				if Map[y][x].features.Test(TileFeature_HasStream) {
 					// Most streams in hot deserts are ephemeral (seasonal)
-					if desertIntensity > 0.7 && rng.Float64() < 0.8 {
-						Map[y][x].hasStream = false
+					if desertIntensity > 0.7 && rng.Float64() < 0.8 { // TODO
+						Map[y][x].features.Clear(TileFeature_HasStream)
 					} else if desertIntensity > 0.5 && rng.Float64() < 0.6 {
-						Map[y][x].hasStream = false
+						Map[y][x].features.Clear(TileFeature_HasStream)
 					} else if desertIntensity > 0.3 && rng.Float64() < 0.4 {
-						Map[y][x].hasStream = false
+						Map[y][x].features.Clear(TileFeature_HasStream)
 					}
 				}
 
 				// Ponds are very rare in hot deserts, can exist in cold deserts
-				if Map[y][x].hasPond {
+				if Map[y][x].features.Test(TileFeature_HasPond) {
 					if isHotDesert && rng.Float64() < 0.9 {
-						Map[y][x].hasPond = false
+						Map[y][x].features.Clear(TileFeature_HasPond)
 					} else if desertIntensity > 0.5 && rng.Float64() < 0.7 {
-						Map[y][x].hasPond = false
+						Map[y][x].features.Clear(TileFeature_HasPond)
 					} else if desertIntensity > 0.3 && rng.Float64() < 0.5 {
-						Map[y][x].hasPond = false
+						Map[y][x].features.Clear(TileFeature_HasPond)
 					}
 				}
 
 				// Springs can exist in deserts but are rare
-				if Map[y][x].hasSpring {
+				if Map[y][x].features.Test(TileFeature_HasSpring) {
 					if desertIntensity > 0.7 && rng.Float64() < 0.7 {
-						Map[y][x].hasSpring = false
+						Map[y][x].features.Clear(TileFeature_HasSpring)
 					} else if desertIntensity > 0.5 && rng.Float64() < 0.5 {
-						Map[y][x].hasSpring = false
+						Map[y][x].features.Clear(TileFeature_HasSpring)
 					} else if desertIntensity > 0.3 && rng.Float64() < 0.3 {
-						Map[y][x].hasSpring = false
+						Map[y][x].features.Clear(TileFeature_HasSpring)
 					}
 				}
 
 				// Marshes are extremely rare in hot deserts
-				if Map[y][x].hasMarsh {
+				if Map[y][x].features.Test(TileFeature_HasMarsh) {
 					if desertIntensity > 0.7 && rng.Float64() < 0.95 {
-						Map[y][x].hasMarsh = false
+						Map[y][x].features.Clear(TileFeature_HasMarsh)
 					} else if desertIntensity > 0.5 && rng.Float64() < 0.8 {
-						Map[y][x].hasMarsh = false
+						Map[y][x].features.Clear(TileFeature_HasMarsh)
 					} else if desertIntensity > 0.3 && rng.Float64() < 0.6 {
-						Map[y][x].hasMarsh = false
+						Map[y][x].features.Clear(TileFeature_HasMarsh)
 					}
 				}
 
 				// Flood areas can exist seasonally in deserts
-				if Map[y][x].hasFloodArea {
+				if Map[y][x].features.Test(TileFeature_HasFloodArea) {
 					// Desert floods are typically flash floods
 					// More likely if there's high seasonal rainfall variation
 					if rainRange < 0.3 || (desertIntensity > 0.7 && rng.Float64() < 0.7) {
-						Map[y][x].hasFloodArea = false
+						Map[y][x].features.Clear(TileFeature_HasFloodArea)
 					} else if desertIntensity > 0.5 && rng.Float64() < 0.5 {
-						Map[y][x].hasFloodArea = false
+						Map[y][x].features.Clear(TileFeature_HasFloodArea)
 					}
 				}
 
 				// 2. Vegetation features
 				// Groves are extremely rare in true deserts, possible in semi-arid regions
-				if Map[y][x].hasGrove {
+				if Map[y][x].features.Test(TileFeature_HasGrove) {
 					if desertIntensity > 0.7 && rng.Float64() < 0.95 {
-						Map[y][x].hasGrove = false
+						Map[y][x].features.Clear(TileFeature_HasGrove)
 					} else if desertIntensity > 0.5 && rng.Float64() < 0.8 {
-						Map[y][x].hasGrove = false
+						Map[y][x].features.Clear(TileFeature_HasGrove)
 					} else if desertIntensity > 0.3 && rng.Float64() < 0.6 {
-						Map[y][x].hasGrove = false
+						Map[y][x].features.Clear(TileFeature_HasGrove)
 					}
 				}
 
 				// Meadows are extremely rare in true deserts
-				if Map[y][x].hasMeadow {
+				if Map[y][x].features.Test(TileFeature_HasMeadow) {
 					// Deserts can have spring wildflower blooms after rain
 					// But persistent meadows are very rare
 					if desertIntensity > 0.7 && rng.Float64() < 0.95 {
-						Map[y][x].hasMeadow = false
+						Map[y][x].features.Clear(TileFeature_HasMeadow)
 					} else if desertIntensity > 0.5 && rng.Float64() < 0.85 {
-						Map[y][x].hasMeadow = false
+						Map[y][x].features.Clear(TileFeature_HasMeadow)
 					} else if desertIntensity > 0.3 && rng.Float64() < 0.7 {
-						Map[y][x].hasMeadow = false
+						Map[y][x].features.Clear(TileFeature_HasMeadow)
 					}
 				}
 
 				// 3. Add desert-specific features
 				// Increase chance of scrubland and rocks in deserts
-				if !Map[y][x].hasScrub && !Map[y][x].hasRocks && !Map[y][x].hasSaltFlat {
+				if !Map[y][x].features.Test(TileFeature_HasScrub) && !Map[y][x].features.Test(TileFeature_HasRocks) && !Map[y][x].features.Test(TileFeature_HasSaltFlat) {
 					// Desert vegetation pattern depends on desert type
 					if isHotDesert || isExtremeTrueDesert {
 						// Hot deserts have more scrub and rocks
 						if rng.Float64() < 0.5 {
-							Map[y][x].hasScrub = true
+							Map[y][x].features.Set(TileFeature_HasScrub)
 						} else if rng.Float64() < 0.4 {
-							Map[y][x].hasRocks = true
+							Map[y][x].features.Set(TileFeature_HasRocks)
 						}
 					} else if isColdDesert {
 						// Cold deserts have more rocks and less vegetation
 						if rng.Float64() < 0.6 {
-							Map[y][x].hasRocks = true
+							Map[y][x].features.Set(TileFeature_HasRocks)
 						} else if rng.Float64() < 0.3 {
-							Map[y][x].hasScrub = true
+							Map[y][x].features.Set(TileFeature_HasScrub)
 						}
 					} else {
 						// Semi-deserts have more vegetation
 						if rng.Float64() < 0.6 {
-							Map[y][x].hasScrub = true
+							Map[y][x].features.Set(TileFeature_HasScrub)
 						} else if rng.Float64() < 0.3 {
-							Map[y][x].hasRocks = true
+							Map[y][x].features.Set(TileFeature_HasRocks)
 						}
 					}
 
@@ -3152,7 +3174,7 @@ func generateDeserts(seed int64) {
 					if Map[y][x].altitude < 0.4 &&
 						(isHotDesert || isExtremeTrueDesert) &&
 						rng.Float64() < 0.2 {
-						Map[y][x].hasSaltFlat = true
+						Map[y][x].features.Set(TileFeature_HasSaltFlat)
 					}
 				}
 
@@ -3466,7 +3488,7 @@ func calculateWaterProximity(x, y int, waterBodies, rivers []struct{ x, y int })
 	}
 
 	// Also consider small water features
-	if Map[y][x].hasStream || Map[y][x].hasPond || Map[y][x].hasSpring {
+	if Map[y][x].features.Test(TileFeature_HasStream) || Map[y][x].features.Test(TileFeature_HasPond) || Map[y][x].features.Test(TileFeature_HasSpring) {
 		proximity = math.Max(proximity, 0.4) // Local water sources have modest influence
 	}
 
@@ -3574,7 +3596,7 @@ func refineClimate() {
 			}
 
 			// Marshes are wetter
-			if Map[y][x].hasMarsh {
+			if Map[y][x].features.Test(TileFeature_HasMarsh) {
 				Map[y][x].climate.winterRain = math.Min(1.0, Map[y][x].climate.winterRain+0.25)
 				Map[y][x].climate.springRain = math.Min(1.0, Map[y][x].climate.springRain+0.25)
 				Map[y][x].climate.summerRain = math.Min(1.0, Map[y][x].climate.summerRain+0.25)
@@ -3895,7 +3917,7 @@ func generateTrees(seed int64) {
 			}
 
 			// Groves guarantee some trees
-			if tile.hasGrove {
+			if tile.features.Test(TileFeature_HasGrove) {
 				baseChance = math.Max(baseChance, 0.8)
 			}
 
@@ -3919,7 +3941,7 @@ func generateTrees(seed int64) {
 				}
 
 				// Adjust density based on conditions
-				if tile.hasGrove {
+				if tile.features.Test(TileFeature_HasGrove) {
 					baseDensity *= 1.3
 				}
 				if tile.climate.avgRain < 0.3 {
@@ -4038,10 +4060,10 @@ func generateCoalTiles(seed int64) {
 			}
 
 			// Additional factors
-			if tile.hasMarsh || tile.hasFloodArea {
+			if tile.features.Test(TileFeature_HasMarsh) || tile.features.Test(TileFeature_HasFloodArea) {
 				suitability += 0.2 // These areas collect organic material
 			}
-			if tile.hasPond {
+			if tile.features.Test(TileFeature_HasPond) {
 				suitability += 0.15 // Ponds can indicate past wetland conditions
 			}
 
@@ -4114,7 +4136,7 @@ func generateGraniteTiles(seed int64) {
 			}
 
 			// Rock outcroppings often indicate exposed bedrock
-			if tile.hasRocks {
+			if tile.features.Test(TileFeature_HasRocks) {
 				suitability += 0.2
 			}
 

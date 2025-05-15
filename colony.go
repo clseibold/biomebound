@@ -22,14 +22,14 @@ type Colony struct {
 	agents         []Agent
 	resourceCounts [Resource_Max]uint // Current resources in storage
 	landResources  [10]ResourceZone   // Available resource zones from land
-	//landResources  [LandResource_Max]uint // Available resources from land
-	buildings []Building
+	buildings      []Building
 
 	// Production and consumption for current tick, the whole integer committed to storage at the start of the next tick.
 	currentProduction     [Resource_Max]float64
 	currentConsumption    [Resource_Max]float64
 	currentTickProduction [Resource_Max]float64
 
+	// mutex sync.RWMutex
 	// resourceConsumers [Resource_Max]*Node
 	// landResourceProducers [LandResource_Max]*Node
 	// resourceProducers [Resource_Max]*Node
@@ -155,6 +155,15 @@ func NewColony(context *Context, id ColonyId, name string, initialPopulationSize
 	}
 
 	return colony
+}
+
+func (colony *Colony) GetTile() *Tile {
+	return &Map[colony.tileLocation.Y][colony.tileLocation.X]
+}
+
+func (colony *Colony) AddBuilding(t BuildingType, material _resource, upgradeLevel uint, resourceZone ResourceZoneId) BuildingId {
+	colony.buildings = append(colony.buildings, Building{BuildingId(len(colony.buildings)), t, material, upgradeLevel, resourceZone})
+	return BuildingId(len(colony.buildings))
 }
 
 func (colony *Colony) Tick() {

@@ -85,31 +85,31 @@ func PrintWorldMap(request *sis.Request) {
 			} else {
 				tile := &Map[y][x]
 				// Prefix
-				if tile.hasSpring && tile.hasPond {
+				if tile.features.Test(TileFeature_HasSpring) && tile.features.Test(TileFeature_HasPond) {
 					request.PlainText("⊙")
-				} else if tile.hasSpring && tile.hasStream {
+				} else if tile.features.Test(TileFeature_HasSpring) && tile.features.Test(TileFeature_HasStream) {
 					request.PlainText("⊗")
-				} else if tile.hasSpring {
+				} else if tile.features.Test(TileFeature_HasSpring) {
 					request.PlainText("⊕")
-				} else if tile.hasMarsh && tile.hasPond {
+				} else if tile.features.Test(TileFeature_HasMarsh) && tile.features.Test(TileFeature_HasPond) {
 					request.PlainText("⊛")
-				} else if tile.hasPond {
+				} else if tile.features.Test(TileFeature_HasPond) {
 					request.PlainText("o")
-				} else if tile.hasMarsh {
+				} else if tile.features.Test(TileFeature_HasMarsh) {
 					request.PlainText("≈")
-				} else if tile.hasStream {
+				} else if tile.features.Test(TileFeature_HasStream) {
 					request.PlainText(".")
-				} else if tile.hasGrove {
+				} else if tile.features.Test(TileFeature_HasGrove) {
 					request.PlainText("Υ")
-				} else if tile.hasMeadow {
+				} else if tile.features.Test(TileFeature_HasMeadow) {
 					request.PlainText("*")
-				} else if tile.hasScrub {
+				} else if tile.features.Test(TileFeature_HasScrub) {
 					request.PlainText("⌿")
-				} else if tile.hasRocks {
+				} else if tile.features.Test(TileFeature_HasRocks) {
 					request.PlainText("◊")
-				} else if tile.hasSaltFlat {
+				} else if tile.features.Test(TileFeature_HasSaltFlat) {
 					request.PlainText("□")
-				} else if tile.hasFloodArea {
+				} else if tile.features.Test(TileFeature_HasFloodArea) {
 					request.PlainText("∴")
 					//} else if tile.hasGameTrail {
 					// request.PlainText("-")
@@ -250,39 +250,39 @@ func PrintWorldMap(request *sis.Request) {
 			}
 
 			// Water features
-			if tile.hasStream {
+			if tile.features.Test(TileFeature_HasStream) {
 				landFeatureCounts[1]++
 			}
-			if tile.hasPond {
+			if tile.features.Test(TileFeature_HasPond) {
 				landFeatureCounts[2]++
 			}
-			if tile.hasSpring {
+			if tile.features.Test(TileFeature_HasSpring) {
 				landFeatureCounts[3]++
 			}
-			if tile.hasMarsh {
+			if tile.features.Test(TileFeature_HasMarsh) {
 				landFeatureCounts[4]++
 			}
 
 			// Plains features
-			if tile.hasGrove {
+			if tile.features.Test(TileFeature_HasGrove) {
 				landFeatureCounts[5]++
 			}
-			if tile.hasMeadow {
+			if tile.features.Test(TileFeature_HasMeadow) {
 				landFeatureCounts[6]++
 			}
-			if tile.hasScrub {
+			if tile.features.Test(TileFeature_HasScrub) {
 				landFeatureCounts[7]++
 			}
-			if tile.hasRocks {
+			if tile.features.Test(TileFeature_HasRocks) {
 				landFeatureCounts[8]++
 			}
-			if tile.hasGameTrail {
+			if tile.features.Test(TileFeature_HasGameTrail) {
 				landFeatureCounts[9]++
 			}
-			if tile.hasFloodArea {
+			if tile.features.Test(TileFeature_HasFloodArea) {
 				landFeatureCounts[10]++
 			}
-			if tile.hasSaltFlat {
+			if tile.features.Test(TileFeature_HasSaltFlat) {
 				landFeatureCounts[11]++
 			}
 			if tile.hasCoal {

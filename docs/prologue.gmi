@@ -1,8 +1,8 @@
-# The Rise and Fall of Haven's Rest
+# Prologue: The Rise and Fall of Haven's Rest
 
-In the early days of colonial expansion, a small group of settlers found themselves drawn to a promising valley nestled between rolling hills. The location, marked by a gentle stream and surrounded by a temperate deciduous forest, seemed to offer everything they needed. The climate was moderate, with an average temperature that kept the valley comfortable through most seasons, and rainfall that ensured steady growth of the native oak and maple trees that dominated the landscape.
+In the early days, a small group of colonists settled in a valley, a temperate deciduous forest marked by a stream that seemed to offer everything they needed. The climate was moderate, with an average temperature that kept the valley comfortable through most seasons, the rainfall feeding the growth of the native oak and maple trees that dominated the landscape.
 
-They named their settlement Haven's Rest, inspired by the natural shelter the valley provided and the abundant resources at hand. The first structures were simple - lean-tos crafted from fallen branches and thatched with broad maple leaves. Within days, the settlers had identified several vital resource zones: a dense grove of red maples to the north, a berry-rich meadow to the east, and most promising of all, exposed granite outcroppings in the western hills that promised building material for more permanent structures.
+They named the settlement Haven's Rest, inspired by the shelter the valley provided them and its abundant resources. They began to build their first structures, lean-tos crafted from fallen branches and thatched with maple leaves. Within days, the settlers had explored several resource zones within the land: a dense grove of red maples, a meadow rich with berries, and exposed granite outcroppings that promised building material for stable structures that could endure the weather.
 
 The first winter tested their resolve. The temperature dropped sharply, revealing why the local trees were predominantly hardy species like oak and hickory. The settlers learned to read the land's signs - the way the beech trees' smooth, silver-gray bark caught the winter light, how the thick layers of fallen leaves could be gathered for insulation. They discovered that the stream, fed by a natural spring, never fully froze, providing year-round water access.
 
@@ -27,3 +27,5 @@ Above the valley, carved into the granite they so proudly quarried, remains thei
 ## Welcome to Biomebound: Colony Stratum
 
 You stand at the edge of your own valley, resources scattered across the landscape before you. The ruins of Haven's Rest and countless other failed settlements remind us that survival requires more than just abundant resources—it demands wisdom, adaptability, and the courage to forge connections beyond our walls. What path will you choose for your colony?
+
+=> / Begin

@@ -408,21 +408,21 @@ func assignBiomes() {
 			}
 
 			// 3. Wetlands and swamps
-			if Map[y][x].hasMarsh {
+			if Map[y][x].features.Test(TileFeature_HasMarsh) {
 				if avgTemp > 0.7 {
 					if landType == LandType_Coastal {
-						if Map[y][x].hasGrove {
+						if Map[y][x].features.Test(TileFeature_HasGrove) {
 							Map[y][x].biome = Biome_Mangrove
 						} else {
 							Map[y][x].biome = Biome_MangroveSwamp
 						}
-					} else if Map[y][x].hasGrove {
+					} else if Map[y][x].features.Test(TileFeature_HasGrove) {
 						Map[y][x].biome = Biome_TropicalSwampForest
 					} else {
 						Map[y][x].biome = Biome_TropicalSwamp
 					}
 				} else if avgTemp > 0.4 {
-					if Map[y][x].hasGrove && summerTemp > 0.7 {
+					if Map[y][x].features.Test(TileFeature_HasGrove) && summerTemp > 0.7 {
 						Map[y][x].biome = Biome_CypressSwamp
 					} else {
 						Map[y][x].biome = Biome_TemperateSwamp
@@ -616,7 +616,7 @@ func assignBiomes() {
 			// Adjust based on specific features
 
 			// Groves tend to push toward more forested biomes
-			if Map[y][x].hasGrove {
+			if Map[y][x].features.Test(TileFeature_HasGrove) {
 				// In very wet areas, upgrade to richer forest types
 				if Map[y][x].biome == Biome_Savanna && Map[y][x].climate.avgRain > 0.4 {
 					Map[y][x].biome = Biome_TropicalSeasonalForest
@@ -640,7 +640,7 @@ func assignBiomes() {
 			}
 
 			// Desert-specific features
-			if Map[y][x].isDesert && !Map[y][x].hasGrove {
+			if Map[y][x].isDesert && !Map[y][x].features.Test(TileFeature_HasGrove) {
 				if Map[y][x].climate.avgTemp > 0.7 && Map[y][x].climate.avgRain < 0.15 {
 					Map[y][x].biome = Biome_ExtremeDesert
 				} else if Map[y][x].climate.avgTemp > 0.6 && Map[y][x].climate.avgRain < 0.25 {
@@ -651,7 +651,7 @@ func assignBiomes() {
 			}
 
 			// Scrub pushes toward more arid biomes
-			if Map[y][x].hasScrub && !Map[y][x].hasGrove {
+			if Map[y][x].features.Test(TileFeature_HasScrub) && !Map[y][x].features.Test(TileFeature_HasGrove) {
 				if Map[y][x].biome == Biome_Savanna && Map[y][x].climate.avgRain < 0.4 {
 					Map[y][x].biome = Biome_DesertShrubland
 				}
@@ -664,7 +664,7 @@ func assignBiomes() {
 			}
 
 			// Salt flats are desert features
-			if Map[y][x].hasSaltFlat {
+			if Map[y][x].features.Test(TileFeature_HasSaltFlat) {
 				if Map[y][x].climate.avgTemp > 0.6 {
 					Map[y][x].biome = Biome_HotDesert
 				} else if Map[y][x].climate.avgTemp > 0.3 {
