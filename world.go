@@ -76,21 +76,6 @@ type Tile struct {
 
 	features bitset.BitSet[TileFeatures, TileFeatures]
 
-	// Water features
-	// hasStream bool // Contains a small stream/creek within the tile
-	// hasPond   bool // Contains a small pond within the tile
-	// hasSpring bool // Contains a natural spring (water source)
-	// hasMarsh  bool // Contains a marshy area (soggy ground)
-
-	// Plains features
-	// hasGrove     bool // Contains a small grove of trees
-	// hasMeadow    bool // Contains a flower-rich meadow
-	// hasScrub     bool // Contains scrubland with brush
-	// hasRocks     bool // Contains small rock outcroppings
-	// hasGameTrail bool // Contains animal paths/trails
-	// hasFloodArea bool // Contains area that seasonally floods
-	// hasSaltFlat  bool // Contains a small salt flat or mineral deposit
-
 	hasCoal    bool
 	hasGranite bool
 

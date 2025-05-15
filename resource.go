@@ -400,6 +400,7 @@ const (
 	// Wood and Fuel
 	_resource_Logs
 	Resource_Coal
+	Resource_Charcoal
 
 	// Stone
 	Resource_Clay // Used for pottery and bricks
@@ -469,6 +470,8 @@ func (resource _resource) ToString() string {
 		return resource.Tree().ToString() + " Logs"
 	case Resource_Coal:
 		return "Coal"
+	case Resource_Charcoal:
+		return "Charcoal"
 	case Resource_Clay:
 		return "Clay"
 	case Resource_Granite:
